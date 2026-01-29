@@ -168,8 +168,10 @@ Pixel AUPRO uses anomalib's public metric API; if it's unavailable in your insta
 ## Inference (Generate overlay / mask / JSON)
 
 ```bash
-python scripts/predict.py --run_dir runs/padim/transistor/smoke_padim2 --device cpu
+python scripts/predict.py --run_dir runs/padim/transistor/smoke_padim2 --device cpu --pixel-threshold-mult 3.0
 ```
+
+Use `--pixel-threshold-mult` to adjust sensitivity for cleaner masks (Recommended: `3.0` for PaDiM, `1.2` for PatchCore).
 
 Output to `<run_dir>/predictions/`:
 - `preds.jsonl`: Structured prediction results for each image
@@ -185,7 +187,8 @@ python scripts/aoi_runner.py \
   --input_dir <your_images/> \
   --output_dir outputs/demo \
   --model_dir runs/patchcore/transistor/smoke_patchcore2 \
-  --device cpu
+  --device cpu \
+  --pixel-threshold-mult 1.2
 ```
 
 ### Output Directory Structure

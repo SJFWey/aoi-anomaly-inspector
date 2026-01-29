@@ -5,7 +5,7 @@
     "padim": {
       "image_AUROC": 0.9108333333333334,
       "pixel_AUROC": 0.968538115676983,
-      "pixel_AUPRO": 0.837689995765686,
+      "pixel_AUPRO": null,
       "category": "transistor",
       "image_size": [
         256,
@@ -16,7 +16,7 @@
     "patchcore": {
       "image_AUROC": 0.9954166666666666,
       "pixel_AUROC": 0.9607136415319634,
-      "pixel_AUPRO": 0.9356051683425903,
+      "pixel_AUPRO": null,
       "category": "transistor",
       "image_size": [
         256,
@@ -32,7 +32,7 @@
         "defect_type": "good",
         "pred_score": 29.784469604492188,
         "label": "NG",
-        "num_defects": 11,
+        "num_defects": 0,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/good/000.png",
         "overlay_name": "good_01_overlay.png",
         "mask_name": "good_01_mask.png"
@@ -42,7 +42,7 @@
         "defect_type": "good",
         "pred_score": 30.673385620117188,
         "label": "NG",
-        "num_defects": 17,
+        "num_defects": 0,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/good/001.png",
         "overlay_name": "good_02_overlay.png",
         "mask_name": "good_02_mask.png"
@@ -52,7 +52,7 @@
         "defect_type": "bent_lead",
         "pred_score": 46.94904708862305,
         "label": "NG",
-        "num_defects": 15,
+        "num_defects": 0,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/bent_lead/004.png",
         "overlay_name": "defect_mild_bent_lead_01_overlay.png",
         "mask_name": "defect_mild_bent_lead_01_mask.png"
@@ -62,7 +62,7 @@
         "defect_type": "cut_lead",
         "pred_score": 26.163925170898438,
         "label": "NG",
-        "num_defects": 12,
+        "num_defects": 0,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/cut_lead/005.png",
         "overlay_name": "defect_mild_cut_lead_02_overlay.png",
         "mask_name": "defect_mild_cut_lead_02_mask.png"
@@ -72,7 +72,7 @@
         "defect_type": "damaged_case",
         "pred_score": 46.584781646728516,
         "label": "NG",
-        "num_defects": 9,
+        "num_defects": 0,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/damaged_case/002.png",
         "overlay_name": "defect_medium_damaged_case_03_overlay.png",
         "mask_name": "defect_medium_damaged_case_03_mask.png"
@@ -82,7 +82,7 @@
         "defect_type": "misplaced",
         "pred_score": 142.31137084960938,
         "label": "NG",
-        "num_defects": 6,
+        "num_defects": 3,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/misplaced/006.png",
         "overlay_name": "defect_medium_misplaced_04_overlay.png",
         "mask_name": "defect_medium_misplaced_04_mask.png"
@@ -92,7 +92,7 @@
         "defect_type": "bent_lead",
         "pred_score": 152.938720703125,
         "label": "NG",
-        "num_defects": 16,
+        "num_defects": 1,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/bent_lead/005.png",
         "overlay_name": "defect_severe_bent_lead_05_overlay.png",
         "mask_name": "defect_severe_bent_lead_05_mask.png"
@@ -102,7 +102,7 @@
         "defect_type": "cut_lead",
         "pred_score": 83.81206512451172,
         "label": "NG",
-        "num_defects": 9,
+        "num_defects": 3,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/cut_lead/000.png",
         "overlay_name": "defect_severe_cut_lead_06_overlay.png",
         "mask_name": "defect_severe_cut_lead_06_mask.png"
@@ -114,7 +114,7 @@
         "defect_type": "good",
         "pred_score": 12.62283706665039,
         "label": "NG",
-        "num_defects": 4,
+        "num_defects": 0,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/good/000.png",
         "overlay_name": "good_01_overlay.png",
         "mask_name": "good_01_mask.png"
@@ -124,7 +124,7 @@
         "defect_type": "good",
         "pred_score": 12.359759330749512,
         "label": "NG",
-        "num_defects": 10,
+        "num_defects": 0,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/good/001.png",
         "overlay_name": "good_02_overlay.png",
         "mask_name": "good_02_mask.png"
@@ -134,7 +134,7 @@
         "defect_type": "bent_lead",
         "pred_score": 15.436236381530762,
         "label": "NG",
-        "num_defects": 3,
+        "num_defects": 1,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/bent_lead/004.png",
         "overlay_name": "defect_mild_bent_lead_01_overlay.png",
         "mask_name": "defect_mild_bent_lead_01_mask.png"
@@ -144,7 +144,7 @@
         "defect_type": "cut_lead",
         "pred_score": 15.758085250854492,
         "label": "NG",
-        "num_defects": 4,
+        "num_defects": 1,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/cut_lead/005.png",
         "overlay_name": "defect_mild_cut_lead_02_overlay.png",
         "mask_name": "defect_mild_cut_lead_02_mask.png"
@@ -154,7 +154,7 @@
         "defect_type": "damaged_case",
         "pred_score": 12.976065635681152,
         "label": "NG",
-        "num_defects": 3,
+        "num_defects": 0,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/damaged_case/002.png",
         "overlay_name": "defect_medium_damaged_case_03_overlay.png",
         "mask_name": "defect_medium_damaged_case_03_mask.png"
@@ -164,7 +164,7 @@
         "defect_type": "misplaced",
         "pred_score": 15.643424034118652,
         "label": "NG",
-        "num_defects": 7,
+        "num_defects": 3,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/misplaced/006.png",
         "overlay_name": "defect_medium_misplaced_04_overlay.png",
         "mask_name": "defect_medium_misplaced_04_mask.png"
@@ -174,7 +174,7 @@
         "defect_type": "bent_lead",
         "pred_score": 17.12940788269043,
         "label": "NG",
-        "num_defects": 3,
+        "num_defects": 1,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/bent_lead/005.png",
         "overlay_name": "defect_severe_bent_lead_05_overlay.png",
         "mask_name": "defect_severe_bent_lead_05_mask.png"
@@ -184,12 +184,12 @@
         "defect_type": "cut_lead",
         "pred_score": 14.530930519104004,
         "label": "NG",
-        "num_defects": 8,
+        "num_defects": 1,
         "original_path": "/mnt/d/MyProjects/Datasets/aoi-anomaly-inspector/mvtech/transistor/test/cut_lead/000.png",
         "overlay_name": "defect_severe_cut_lead_06_overlay.png",
         "mask_name": "defect_severe_cut_lead_06_mask.png"
       }
     ]
   },
-  "created_at": "2026-01-29T19:38:06.974988+00:00"
+  "created_at": "2026-01-29T20:24:48.744666+00:00"
 }

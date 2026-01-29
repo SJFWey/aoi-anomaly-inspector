@@ -166,6 +166,13 @@ The model_dir should contain:
         action="store_true",
         help="Disable Gaussian blur before thresholding",
     )
+    parser.add_argument(
+        "--pixel-threshold-mult",
+        type=float,
+        default=1.0,
+        help="Multiply pixel threshold by this factor to reduce noise (default: 1.0). "
+        "Recommended: 3.0 for PADIM, 1.2 for PATCHCORE",
+    )
 
     return parser.parse_args()
 
@@ -250,6 +257,13 @@ def main() -> int:
     print(f"  Device:            {args.device}")
     print(f"  Image threshold:   {thresholds.image_threshold:.6f}")
     print(f"  Pixel threshold:   {thresholds.pixel_threshold:.6f}")
+    if args.pixel_threshold_mult != 1.0:
+        effective_pixel_threshold = (
+            thresholds.pixel_threshold * args.pixel_threshold_mult
+        )
+        print(
+            f"  Pixel thresh mult: {args.pixel_threshold_mult:.2f}x (effective: {effective_pixel_threshold:.6f})"
+        )
     print(f"  Save masks:        {args.save_masks}")
     print(f"  Save overlays:     {args.save_overlays}")
     print(f"  Min defect area:   {args.min_defect_area}")
@@ -283,8 +297,25 @@ def main() -> int:
     model = build_model(cfg)
 
     # Create post-processing callback
+    # Apply pixel threshold multiplier if specified
+    effective_thresholds = thresholds
+    if args.pixel_threshold_mult != 1.0:
+        from aoi.thresholds import Thresholds
+
+        effective_thresholds = Thresholds(
+            image_threshold=thresholds.image_threshold,
+            pixel_threshold=thresholds.pixel_threshold * args.pixel_threshold_mult,
+            quantile_image=thresholds.quantile_image,
+            quantile_pixel=thresholds.quantile_pixel,
+            num_train_images=thresholds.num_train_images,
+            pixel_sample_per_image=thresholds.pixel_sample_per_image,
+            pixel_sample_seed=thresholds.pixel_sample_seed,
+            created_at=thresholds.created_at,
+            script_version=thresholds.script_version,
+        )
+
     postprocess_writer = PostprocessPredictionWriter(
-        thresholds=thresholds,
+        thresholds=effective_thresholds,
         output_dir=args.output_dir,
         model=model_name,
         category=category,
