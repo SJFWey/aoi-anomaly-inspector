@@ -1,4 +1,25 @@
-"""Threshold computation and management for AOI pipeline."""
+"""Threshold computation and management for AOI pipeline.
+
+Threshold Application Conventions (Milestone 5)
+-----------------------------------------------
+
+This module provides two thresholds computed from normal/good training samples:
+
+1. **image_threshold**: Used for OK/NG classification at the image level.
+   - Compare `pred_score` (or `anomaly_map.max()`) against `image_threshold`.
+   - If `pred_score >= image_threshold` → NG (anomaly detected)
+   - If `pred_score < image_threshold` → OK (normal)
+
+2. **pixel_threshold**: Used for generating binary defect masks.
+   - Compare each pixel of `anomaly_map` against `pixel_threshold`.
+   - `mask[y, x] = 1` if `anomaly_map[y, x] >= pixel_threshold` else `0`
+   - The raw anomaly_map values (not normalized) are used for thresholding.
+
+Normalization Note:
+   Normalization (e.g., min-max to [0,1]) is only for visualization purposes.
+   Threshold comparisons should always use raw anomaly values to ensure consistency
+   with how thresholds were computed during training.
+"""
 
 from __future__ import annotations
 
@@ -128,7 +149,10 @@ class ThresholdCollector(Callback):
             batch_size = amap.shape[0]
             for i in range(batch_size):
                 pixels = amap[i].flatten()
-                if self.pixel_sample_per_image is not None and len(pixels) > self.pixel_sample_per_image:
+                if (
+                    self.pixel_sample_per_image is not None
+                    and len(pixels) > self.pixel_sample_per_image
+                ):
                     indices = self._rng.choice(
                         len(pixels), size=self.pixel_sample_per_image, replace=False
                     )

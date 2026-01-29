@@ -3,12 +3,20 @@
 from .callbacks import (
     JsonlPredictionWriter,
     MetricCollector,
+    PostprocessPredictionWriter,
     evaluate_and_write_metrics,
 )
 from .config import dump_json, dump_yaml, load_yaml
 from .data import build_dataloaders, build_test_loader, build_train_loader
 from .device import as_int_pair, resolve_device
 from .models import build_model
+from .postprocess import (
+    DefectInfo,
+    PostprocessResult,
+    anomaly_map_to_mask,
+    extract_components,
+    postprocess_anomaly_map,
+)
 from .run import RunPaths, make_run_paths, now_run_id
 from .thresholds import (
     Thresholds,
@@ -16,6 +24,13 @@ from .thresholds import (
     compute_and_save_thresholds,
     load_thresholds,
     save_thresholds,
+)
+from .viz import (
+    create_heatmap,
+    normalize_anomaly_map,
+    save_mask,
+    save_overlay,
+    save_overlay_with_mask,
 )
 
 __all__ = [
@@ -39,6 +54,7 @@ __all__ = [
     # callbacks
     "JsonlPredictionWriter",
     "MetricCollector",
+    "PostprocessPredictionWriter",
     "evaluate_and_write_metrics",
     # thresholds
     "Thresholds",
@@ -46,4 +62,16 @@ __all__ = [
     "compute_and_save_thresholds",
     "load_thresholds",
     "save_thresholds",
+    # postprocess
+    "DefectInfo",
+    "PostprocessResult",
+    "anomaly_map_to_mask",
+    "extract_components",
+    "postprocess_anomaly_map",
+    # viz
+    "normalize_anomaly_map",
+    "create_heatmap",
+    "save_mask",
+    "save_overlay",
+    "save_overlay_with_mask",
 ]
