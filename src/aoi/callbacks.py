@@ -8,7 +8,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
-from anomalib.metrics.aupro import _AUPRO as AUPRO
+try:
+    from anomalib.metrics import AUPRO
+except ImportError:
+    try:
+        from anomalib.metrics.aupro import AUPRO
+    except ImportError:
+        AUPRO = None
 from lightning.pytorch import Trainer
 from lightning.pytorch.callbacks import Callback
 from sklearn.metrics import roc_auc_score
@@ -230,7 +236,7 @@ class MetricCollector(Callback):
         Returns:
             AUPRO value or None if insufficient data.
         """
-        if not self.pixel_scores_2d or not self.pixel_labels_2d:
+        if AUPRO is None or not self.pixel_scores_2d or not self.pixel_labels_2d:
             return None
 
         try:
@@ -465,10 +471,19 @@ class PostprocessPredictionWriter(Callback):
                     if img_np.ndim == 3 and img_np.shape[0] in (1, 3, 4):
                         img_np = np.transpose(img_np, (1, 2, 0))
                     # Convert to uint8
-                    if img_np.max() <= 1.0:
-                        img_np = (img_np * 255).astype(np.uint8)
+                    img_min = float(img_np.min()) if img_np.size else 0.0
+                    img_max = float(img_np.max()) if img_np.size else 0.0
+                    if 0.0 <= img_min and img_max <= 1.0:
+                        img_np = (img_np * 255.0).round()
+                    elif 0.0 <= img_min and img_max <= 255.0:
+                        img_np = np.clip(img_np, 0.0, 255.0)
                     else:
-                        img_np = img_np.astype(np.uint8)
+                        if img_max > img_min:
+                            img_np = (img_np - img_min) / (img_max - img_min)
+                        else:
+                            img_np = np.zeros_like(img_np)
+                        img_np = np.clip(img_np, 0.0, 1.0) * 255.0
+                    img_np = img_np.astype(np.uint8)
                     # Handle single channel
                     if img_np.ndim == 2:
                         img_np = np.stack([img_np] * 3, axis=-1)

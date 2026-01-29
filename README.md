@@ -1,10 +1,10 @@
 # AOI Anomaly Inspector
 
-工业外观异常检测（AOI）pipeline，支持 **PaDiM** 与 **PatchCore** 两种模型，输出 **OK/NG 决策** 与 **缺陷定位** 结果。
+Industrial Automated Optical Inspection (AOI) pipeline supporting **PaDiM** and **PatchCore** models, outputting **OK/NG decisions** and **defect localization** results.
 
-基于 [MVTec AD](https://www.mvtec.com/company/research/datasets/mvtec-ad) 数据集开发，可一键推理任意图片文件夹，输出 overlay 可视化、defect mask、结构化 JSON 报告。
+Developed on the [MVTec AD](https://www.mvtec.com/company/research/datasets/mvtec-ad) dataset, enables one-click inference on any image folder with overlay visualizations, defect masks, and structured JSON reports.
 
-## 两模型对比
+## Model Comparison
 
 ### Metrics Comparison (transistor)
 
@@ -18,13 +18,13 @@
 - **Device**: CPU
 - **Backbone**: ResNet-18 (layer2, layer3)
 
-> **结论**: PatchCore 在图像级检测 (Image AUROC) 和定位质量 (AUPRO) 上表现更优；PaDiM 在像素级分割 (Pixel AUROC) 上略有优势。
+> **Conclusion**: PatchCore performs better in image-level detection (Image AUROC) and localization quality (AUPRO); PaDiM has a slight advantage in pixel-level segmentation (Pixel AUROC).
 
-### 样例可视化
+### Sample Visualizations
 
-下图展示两个模型在相同图像上的异常热力图对比（overlay），左列为 PaDiM，右列为 PatchCore。
+The figures below show anomaly heatmap comparisons (overlays) of the two models on the same images. Left column is PaDiM, right column is PatchCore.
 
-#### Good Samples (正常品)
+#### Good Samples
 
 <table>
 <tr>
@@ -41,63 +41,72 @@
 </tr>
 </table>
 
-#### Defect Samples (缺陷品)
+#### Defect Samples
 
 <table>
 <tr>
-<th>缺陷类型</th>
+<th>Defect Type</th>
 <th>PaDiM</th>
 <th>PatchCore</th>
 </tr>
 <tr>
-<td>cut_lead (轻度)</td>
-<td><img src="comparison_samples/padim/defect_mild_cut_lead_01_overlay.png" width="200"/></td>
-<td><img src="comparison_samples/patchcore/defect_mild_cut_lead_01_overlay.png" width="200"/></td>
+<td>bent_lead (Mild)</td>
+<td><img src="comparison_samples/padim/defect_mild_bent_lead_01_overlay.png" width="200"/></td>
+<td><img src="comparison_samples/patchcore/defect_mild_bent_lead_01_overlay.png" width="200"/></td>
 </tr>
 <tr>
-<td>damaged_case (轻度)</td>
-<td><img src="comparison_samples/padim/defect_mild_damaged_case_02_overlay.png" width="200"/></td>
-<td><img src="comparison_samples/patchcore/defect_mild_damaged_case_02_overlay.png" width="200"/></td>
+<td>cut_lead (Mild)</td>
+<td><img src="comparison_samples/padim/defect_mild_cut_lead_02_overlay.png" width="200"/></td>
+<td><img src="comparison_samples/patchcore/defect_mild_cut_lead_02_overlay.png" width="200"/></td>
 </tr>
 <tr>
-<td>bent_lead (中度)</td>
-<td><img src="comparison_samples/padim/defect_medium_bent_lead_03_overlay.png" width="200"/></td>
-<td><img src="comparison_samples/patchcore/defect_medium_bent_lead_03_overlay.png" width="200"/></td>
+<td>damaged_case (Medium)</td>
+<td><img src="comparison_samples/padim/defect_medium_damaged_case_03_overlay.png" width="200"/></td>
+<td><img src="comparison_samples/patchcore/defect_medium_damaged_case_03_overlay.png" width="200"/></td>
 </tr>
 <tr>
-<td>bent_lead (中度)</td>
-<td><img src="comparison_samples/padim/defect_medium_bent_lead_04_overlay.png" width="200"/></td>
-<td><img src="comparison_samples/patchcore/defect_medium_bent_lead_04_overlay.png" width="200"/></td>
+<td>misplaced (Medium)</td>
+<td><img src="comparison_samples/padim/defect_medium_misplaced_04_overlay.png" width="200"/></td>
+<td><img src="comparison_samples/patchcore/defect_medium_misplaced_04_overlay.png" width="200"/></td>
 </tr>
 <tr>
-<td>bent_lead (重度)</td>
+<td>bent_lead (Severe)</td>
 <td><img src="comparison_samples/padim/defect_severe_bent_lead_05_overlay.png" width="200"/></td>
 <td><img src="comparison_samples/patchcore/defect_severe_bent_lead_05_overlay.png" width="200"/></td>
 </tr>
 <tr>
-<td>misplaced (重度)</td>
-<td><img src="comparison_samples/padim/defect_severe_misplaced_06_overlay.png" width="200"/></td>
-<td><img src="comparison_samples/patchcore/defect_severe_misplaced_06_overlay.png" width="200"/></td>
+<td>cut_lead (Severe)</td>
+<td><img src="comparison_samples/padim/defect_severe_cut_lead_06_overlay.png" width="200"/></td>
+<td><img src="comparison_samples/patchcore/defect_severe_cut_lead_06_overlay.png" width="200"/></td>
 </tr>
 </table>
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 环境
+### Environment
 
-使用 `uv` 管理依赖（见 `pyproject.toml` / `uv.lock`）：
+Use `uv` to manage dependencies (see `pyproject.toml` / `uv.lock`):
 
 ```bash
 uv sync
+uv pip install -e .
 ```
 
-## 数据集
+If you prefer `pip`:
 
-默认按 anomalib 的 MVTec AD 目录结构组织，并在仓库内通过 `datasets/mvtech/` 指向数据集根目录（你已经下载并验证过）。
+```bash
+pip install -e .
+```
 
-目录应类似：
+All scripts import the `aoi` package, so an editable install is required for a fresh checkout.
+
+## Dataset
+
+Organized by default according to anomalib's MVTec AD directory structure, with `datasets/mvtech/` pointing to the dataset root directory in the repository (which you have already downloaded and verified).
+
+Directory structure should look like:
 
 ```text
 datasets/mvtech/
@@ -107,13 +116,13 @@ datasets/mvtech/
     ground_truth/<defect>/*.png
 ```
 
-快速检查（会生成 `preview.png`）：
+Quick check (will generate `preview.png`):
 
 ```bash
 python scripts/check_data.py
 ```
 
-## 训练
+## Training
 
 ### PaDiM
 
@@ -127,45 +136,49 @@ python scripts/train.py --config configs/padim_mvtec.yaml --run_id padim_transis
 python scripts/train.py --config configs/patchcore_mvtec.yaml --run_id patchcore_transistor_001 --device cpu
 ```
 
-常用覆盖参数（两模型通用）：
+Common override parameters (applicable to both models):
 
 ```bash
 python scripts/train.py --config <cfg.yaml> --category transistor --data_root datasets/mvtech --device cpu --run_id <id>
 ```
 
-## 评估与阈值
+## Evaluation and Thresholds
 
-对某个 run 目录重新计算指标并生成阈值：
+Recalculate metrics and generate thresholds for a specific run directory:
 
 ```bash
-# 计算 metrics.json（Image AUROC / Pixel AUROC / Pixel AUPRO）
+# Calculate metrics.json (Image AUROC / Pixel AUROC / Pixel AUPRO)
 python scripts/evaluate.py --run_dir runs/padim/transistor/smoke_padim2 --device cpu
 
-# 同时生成 thresholds.json（用于 OK/NG 判定）
+# Also generate thresholds.json (for OK/NG decision making)
 python scripts/evaluate.py --run_dir runs/padim/transistor/smoke_padim2 --device cpu --compute-thresholds
 ```
 
-### 阈值策略
+Pixel AUPRO uses anomalib's public metric API; if it's unavailable in your installed anomalib version, the value will be `null`.
 
-| 阈值 | 用途 | 计算方式 |
-|-----|------|---------|
-| `image_threshold` | OK/NG 判定 | 训练集 image score 的 99.5 分位数 |
-| `pixel_threshold` | 缺陷 mask 生成 | 训练集 anomaly map 的 99.9 分位数 |
+### Threshold Strategy
 
-> 阈值比较使用原始值（非归一化），归一化仅用于可视化。
+| Threshold | Purpose | Calculation Method |
+|-----------|---------|-------------------|
+| `image_threshold` | OK/NG Decision | 99.5th percentile of training set image scores |
+| `pixel_threshold` | Defect Mask Generation | 99.9th percentile of training set anomaly map values |
 
-## 推理（生成 overlay / mask / JSON）
+> Threshold comparison uses raw values (non-normalized); normalization is used only for visualization.
+
+## Inference (Generate overlay / mask / JSON)
 
 ```bash
 python scripts/predict.py --run_dir runs/padim/transistor/smoke_padim2 --device cpu
 ```
 
-输出到 `<run_dir>/predictions/`：
-- `preds.jsonl`: 每张图的结构化预测结果
-- `masks/`: 二值缺陷 mask
-- `overlays/`: 热力图叠加可视化
+Output to `<run_dir>/predictions/`:
+- `preds.jsonl`: Structured prediction results for each image
+- `masks/`: Binary defect masks (when `--save-masks`)
+- `overlays/`: Heatmap overlay visualizations (when `--save-overlays`)
 
-## AOI Runner（一键推理任意文件夹）
+Overlays are generated from the model input tensor; values are normalized to `0..255` for visualization.
+
+## AOI Runner (One-Click Inference on Any Folder)
 
 ```bash
 python scripts/aoi_runner.py \
@@ -175,17 +188,17 @@ python scripts/aoi_runner.py \
   --device cpu
 ```
 
-### 输出目录结构
+### Output Directory Structure
 
 ```text
 outputs/demo/
-  overlays/       # 热力图叠加可视化
-  masks/          # 二值缺陷 mask
-  preds.jsonl     # 每张图的结构化预测
-  report.json     # 汇总报告
+  overlays/       # Heatmap overlay visualizations
+  masks/          # Binary defect masks
+  preds.jsonl     # Structured predictions for each image
+  report.json     # Summary report
 ```
 
-### preds.jsonl 字段说明
+### preds.jsonl Field Description
 
 ```json
 {
@@ -216,7 +229,9 @@ outputs/demo/
 }
 ```
 
-### report.json 字段说明
+`mask_path` and `overlay_path` are omitted when the corresponding outputs are not saved.
+
+### report.json Field Description
 
 ```json
 {
@@ -228,15 +243,19 @@ outputs/demo/
     "pixel_threshold": 10.75
   },
   "num_images": 100,
+  "num_ok": 40,
   "num_ng": 60,
   "ng_rate": 0.60,
+  "ok_rate": 0.40,
   "created_at": "2026-01-29T15:00:00Z"
 }
 ```
 
-## 两模型对比脚本
+If `preds.jsonl` is empty, counts are zero and rates are `0.0`.
 
-生成对比表和样例可视化：
+## Model Comparison Script
+
+Generate comparison tables and sample visualizations:
 
 ```bash
 python scripts/compare_models.py \
@@ -245,56 +264,144 @@ python scripts/compare_models.py \
   --output_dir comparison_samples
 ```
 
-输出：
-- `comparison_table.md`: Markdown 格式对比表
-- `comparison_samples/padim/`: PaDiM 样例图
-- `comparison_samples/patchcore/`: PatchCore 样例图
-- `comparison_report.json`: 完整对比报告
+Output:
+- `comparison_table.md`: Comparison table in Markdown format
+- `comparison_samples/padim/`: PaDiM sample images
+- `comparison_samples/patchcore/`: PatchCore sample images
+- `comparison_report.json`: Complete comparison report
 
-## 产物结构
+If overlays/masks were not saved during prediction, the comparison script will skip missing files.
 
-每次训练会输出到：
+## Model Export and Consistency Check
+
+### ONNX Export
+
+Export trained models to ONNX format for easy deployment:
+
+```bash
+python scripts/export.py --run_dir runs/padim/transistor/smoke_padim2 --format onnx
+python scripts/export.py --run_dir runs/patchcore/transistor/smoke_patchcore2 --format onnx
+```
+
+Exported artifacts are saved to `<run_dir>/export/model.onnx`.
+
+### Consistency Check
+
+Verify inference consistency between ONNX exported models and original PyTorch models:
+
+```bash
+python scripts/consistency_check.py --run_dir runs/padim/transistor/smoke_padim2
+python scripts/consistency_check.py --run_dir runs/patchcore/transistor/smoke_patchcore2
+```
+
+Check items include:
+- Mean Absolute Error (MAE) of image scores
+- Pixel-level error of anomaly maps
+- IoU consistency of binary masks
+
+### Consistency Check Results
+
+| Model | Score MAE | Map MAE | Mask IoU | Status |
+|------|-----------|---------|----------|------|
+| PaDiM | 1.37e-05 | 8.91e-06 | 1.0 | ✅ PASSED |
+| PatchCore | 2.10e-06 | 2.17e-06 | 1.0 | ✅ PASSED |
+
+> Both models' ONNX exports passed consistency checks, with errors within allowable limits (score_tolerance=0.001, map_tolerance=0.001, mask_iou_threshold=0.99).
+
+## Artifact Structure
+
+Each training run outputs to:
 
 ```text
 runs/<model>/<category>/<run_id>/
-  config.yaml           # 训练配置快照
-  meta.json             # 元信息
-  weights/model.ckpt    # 模型权重
-  preds_train.jsonl     # 训练集推理分数
-  preds_test.jsonl      # 测试集推理分数
-  metrics.json          # 评估指标
-  thresholds.json       # OK/NG 阈值
-  predictions/          # predict.py 输出
+  config.yaml           # Training config snapshot
+  meta.json             # Metadata
+  weights/model.ckpt    # Model weights
+  preds_train.jsonl     # Training set inference scores
+  preds_test.jsonl      # Test set inference scores
+  metrics.json          # Evaluation metrics
+  thresholds.json       # OK/NG thresholds
+  predictions/          # predict.py output
     preds.jsonl
     masks/
     overlays/
-  logs/                 # TensorBoard 日志
+  export/               # ONNX export
+    model.onnx
+    export_meta.json
+    consistency.json
+  logs/                 # TensorBoard logs
 ```
 
-## 设计决策
+## Design Decisions
 
-### 阈值策略
+### Threshold Strategy
 
-- **Image threshold**: 在训练集良品的 image score 上取 99.5 分位数，将误报率控制在固定范围
-- **Pixel threshold**: 在训练集良品的 anomaly map 像素值上取 99.9 分位数，过滤噪声
+- **Image threshold**: Take the 99.5 percentile of image scores on the training set good samples to control the false positive rate within a fixed range
+- **Pixel threshold**: Take the 99.9 percentile of anomaly map pixel values on the training set good samples to filter noise
 
-### 后处理流程
+### Post-processing Pipeline
 
-1. 用 `pixel_threshold` 对原始 anomaly map 做二值化
-2. 连通域分析（8-连通），提取 bbox / 面积 / 质心
-3. 可选：过滤小面积缺陷（`--min-defect-area`）
+1. Binarize the raw anomaly map using `pixel_threshold`
+2. Connected component analysis (8-connected), extract bbox / area / centroid
+3. Optional: Filter small defects (`--min-defect-area`)
 
-### 工程复现性
+### Engineering Reproducibility
 
-- 固定随机种子（seed=42）
-- 训练配置快照保存到 `config.yaml`
-- 依赖锁定到 `uv.lock`
+- Fixed random seed (seed=42)
+- Training configuration snapshot saved to `config.yaml`
+- Dependencies locked in `uv.lock`
 
-## 备注
+## Notes
 
-- 本仓库的默认 `data.num_workers=0`：当前环境下 `torch` 多进程 DataLoader 可能触发 `PermissionError`；如果你的环境支持多进程，可以在 `configs/*.yaml` 里调大。
-- `PatchCore` 的 `coreset_sampling_ratio` 默认设为 `0.01` 以保证 CPU 可在合理时间内跑通；若使用 GPU 或想追求更高性能，可提高到 `0.1` 再试。
+- Default `data.num_workers=0`: Multi-process DataLoader in `torch` might trigger `PermissionError` in the current environment; if your environment supports multi-processing, you can increase this in `configs/*.yaml`.
+- `PatchCore`'s `coreset_sampling_ratio` is set to `0.01` by default to ensure it runs within a reasonable time on CPU; if using GPU or aiming for higher performance, try increasing it to `0.1`.
 
-## 数据许可
+## Full Workflow Example
 
-本项目使用 [MVTec AD](https://www.mvtec.com/company/research/datasets/mvtec-ad) 数据集进行开发与验证。该数据集仅限于学术研究用途，商业使用请联系 MVTec 获取授权。
+The following shows the complete workflow from training to deployment:
+
+```bash
+# 1. Setup environment
+uv sync
+uv pip install -e .
+
+# 2. Check data
+python scripts/check_data.py
+
+# 3. Train models
+python scripts/train.py --config configs/padim_mvtec.yaml --run_id my_padim --device cpu
+python scripts/train.py --config configs/patchcore_mvtec.yaml --run_id my_patchcore --device cpu
+
+# 4. Evaluate and compute thresholds
+python scripts/evaluate.py --run_dir runs/padim/transistor/my_padim --device cpu --compute-thresholds
+python scripts/evaluate.py --run_dir runs/patchcore/transistor/my_patchcore --device cpu --compute-thresholds
+
+# 5. Generate inference visualizations
+python scripts/predict.py --run_dir runs/padim/transistor/my_padim --device cpu
+python scripts/predict.py --run_dir runs/patchcore/transistor/my_patchcore --device cpu
+
+# 6. Export to ONNX
+python scripts/export.py --run_dir runs/padim/transistor/my_padim --format onnx
+python scripts/export.py --run_dir runs/patchcore/transistor/my_patchcore --format onnx
+
+# 7. Consistency check
+python scripts/consistency_check.py --run_dir runs/padim/transistor/my_padim
+python scripts/consistency_check.py --run_dir runs/patchcore/transistor/my_patchcore
+
+# 8. Compare models
+python scripts/compare_models.py \
+  --run_dir_a runs/padim/transistor/my_padim \
+  --run_dir_b runs/patchcore/transistor/my_patchcore \
+  --output_dir comparison_samples
+
+# 9. AOI Runner inference on arbitrary images
+python scripts/aoi_runner.py \
+  --input_dir <your_images/> \
+  --output_dir outputs/demo \
+  --model_dir runs/patchcore/transistor/my_patchcore \
+  --device cpu
+```
+
+## Data License
+
+This project uses the [MVTec AD](https://www.mvtec.com/company/research/datasets/mvtec-ad) dataset for development and validation. This dataset is restricted to academic research purposes only. For commercial use, please contact MVTec for authorization.

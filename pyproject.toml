@@ -1,7 +1,10 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "aoi-anomaly-inspector"
 version = "0.1.0"
-description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -9,8 +12,12 @@ dependencies = [
     "matplotlib>=3.10.8",
     "numpy>=2.4.1",
     "opencv-python>=4.13.0.90",
-    "pandas>=3.0.0",
     "pyyaml>=6.0.3",
-    "requests>=2.32.0",
     "scikit-learn>=1.8.0",
 ]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

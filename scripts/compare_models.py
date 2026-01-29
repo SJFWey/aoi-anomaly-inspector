@@ -6,8 +6,10 @@ This script compares metrics from two models and generates:
 """
 
 import argparse
+import itertools
 import json
 import shutil
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -67,17 +69,122 @@ def generate_comparison_table(
     return "\n".join(lines)
 
 
+def pick_sample_by_index(
+    samples: list[dict[str, Any]],
+    index: int,
+    used_paths: set[str],
+) -> dict[str, Any] | None:
+    """Pick a sample near an index, avoiding duplicates when possible."""
+    if not samples:
+        return None
+
+    if samples[index]["image_path"] not in used_paths:
+        return samples[index]
+
+    # Search nearest available index
+    for offset in range(1, len(samples)):
+        for candidate in (index - offset, index + offset):
+            if 0 <= candidate < len(samples):
+                if samples[candidate]["image_path"] not in used_paths:
+                    return samples[candidate]
+
+    return samples[index]
+
+
+def select_defect_samples(
+    defect_predictions: list[dict[str, Any]],
+    num_defect: int,
+) -> list[dict[str, Any]]:
+    """Select defect samples with type diversity per severity tier."""
+    if num_defect <= 0:
+        return []
+
+    by_type: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for pred in defect_predictions:
+        defect_type = Path(pred.get("image_path", "")).parent.name
+        by_type[defect_type].append(pred)
+
+    for samples in by_type.values():
+        samples.sort(key=lambda x: x.get("pred_score", 0))
+
+    defect_types = sorted(by_type)
+    if not defect_types:
+        return []
+
+    def index_for_tier(tier: str, count: int) -> int:
+        if count <= 1:
+            return 0
+        if tier == "low":
+            return 0
+        if tier == "mid":
+            return count // 2
+        return count - 1
+
+    base = num_defect // 3
+    remainder = num_defect % 3
+    counts = [base, base, base]
+    if remainder >= 1:
+        counts[1] += 1
+    if remainder >= 2:
+        counts[2] += 1
+
+    tiers = [("low", counts[0]), ("mid", counts[1]), ("high", counts[2])]
+    selected: list[dict[str, Any]] = []
+    used_paths: set[str] = set()
+
+    type_cycle = itertools.cycle(defect_types)
+
+    for tier, count in tiers:
+        if count <= 0:
+            continue
+        tier_selected: list[dict[str, Any]] = []
+        used_types: set[str] = set()
+
+        attempts = 0
+        max_attempts = len(defect_types) * 3
+
+        while len(tier_selected) < count and attempts < max_attempts:
+            defect_type = next(type_cycle)
+            attempts += 1
+            if defect_type in used_types:
+                continue
+
+            samples = by_type[defect_type]
+            if not samples:
+                continue
+
+            idx = index_for_tier(tier, len(samples))
+            sample = pick_sample_by_index(samples, idx, used_paths)
+            if sample is None:
+                continue
+
+            tier_selected.append(sample)
+            used_types.add(defect_type)
+            used_paths.add(sample["image_path"])
+
+        if len(tier_selected) < count:
+            for defect_type in defect_types:
+                for sample in by_type[defect_type]:
+                    if sample["image_path"] in used_paths:
+                        continue
+                    tier_selected.append(sample)
+                    used_paths.add(sample["image_path"])
+                    if len(tier_selected) >= count:
+                        break
+                if len(tier_selected) >= count:
+                    break
+
+        selected.extend(tier_selected)
+
+    return selected[:num_defect]
+
+
 def select_sample_images(
     predictions: list[dict[str, Any]],
     num_good: int = 2,
     num_defect: int = 6,
 ) -> dict[str, list[dict[str, Any]]]:
-    """Select sample images for visualization.
-
-    Selects:
-    - Good images (gt_label=0, label=OK)
-    - Defect images sorted by pred_score (mix of mild and severe)
-    """
+    """Select sample images for visualization."""
     good_samples = []
     defect_samples = []
 
@@ -87,22 +194,31 @@ def select_sample_images(
         else:
             defect_samples.append(pred)
 
-    # Sort defects by pred_score to get a range of severity
-    defect_samples.sort(key=lambda x: x.get("pred_score", 0))
-
-    # Select mild, medium, and severe defects
-    selected_defects = []
-    if len(defect_samples) >= num_defect:
-        # Pick from different severity ranges
-        indices = np.linspace(0, len(defect_samples) - 1, num_defect, dtype=int)
-        selected_defects = [defect_samples[i] for i in indices]
-    else:
-        selected_defects = defect_samples[:num_defect]
+    selected_defects = select_defect_samples(defect_samples, num_defect)
 
     return {
         "good": good_samples[:num_good],
         "defect": selected_defects,
     }
+
+
+def select_shared_samples(
+    preds_a: list[dict[str, Any]],
+    preds_b: list[dict[str, Any]],
+    num_good: int,
+    num_defect: int,
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, list[dict[str, Any]]]]:
+    """Select samples that exist in both prediction sets."""
+    preds_b_map = {pred.get("image_path"): pred for pred in preds_b}
+    shared_a = [pred for pred in preds_a if pred.get("image_path") in preds_b_map]
+
+    samples_a = select_sample_images(shared_a, num_good=num_good, num_defect=num_defect)
+    samples_b = {
+        "good": [preds_b_map[pred["image_path"]] for pred in samples_a["good"]],
+        "defect": [preds_b_map[pred["image_path"]] for pred in samples_a["defect"]],
+    }
+
+    return samples_a, samples_b
 
 
 def copy_sample_images(
@@ -120,8 +236,10 @@ def copy_sample_images(
 
     for category, items in samples.items():
         for i, pred in enumerate(items):
-            overlay_src = pred_dir / pred.get("overlay_path", "")
-            mask_src = pred_dir / pred.get("mask_path", "")
+            overlay_rel = pred.get("overlay_path")
+            mask_rel = pred.get("mask_path")
+            overlay_src = pred_dir / overlay_rel if overlay_rel else None
+            mask_src = pred_dir / mask_rel if mask_rel else None
 
             # Generate descriptive filename
             defect_type = Path(pred.get("image_path", "")).parent.name
@@ -132,11 +250,11 @@ def copy_sample_images(
                 base_name = f"defect_{severity}_{defect_type}_{i + 1:02d}"
 
             # Copy files
-            if overlay_src.exists():
+            if overlay_src is not None and overlay_src.is_file():
                 overlay_dst = model_out / f"{base_name}_overlay.png"
                 shutil.copy2(overlay_src, overlay_dst)
 
-            if mask_src.exists():
+            if mask_src is not None and mask_src.is_file():
                 mask_dst = model_out / f"{base_name}_mask.png"
                 shutil.copy2(mask_src, mask_dst)
 
@@ -320,9 +438,15 @@ def main() -> None:
         preds_a = load_predictions(args.run_dir_a)
         preds_b = load_predictions(args.run_dir_b)
 
-        # Select samples
-        samples_a = select_sample_images(preds_a, args.num_good, args.num_defect)
-        samples_b = select_sample_images(preds_b, args.num_good, args.num_defect)
+        # Select shared samples
+        samples_a, samples_b = select_shared_samples(
+            preds_a, preds_b, args.num_good, args.num_defect
+        )
+        if not samples_a["good"] and not samples_a["defect"]:
+            raise FileNotFoundError(
+                "No shared samples found between prediction sets. "
+                "Ensure both runs were evaluated on the same dataset."
+            )
 
         # Create output directory
         args.output_dir.mkdir(parents=True, exist_ok=True)

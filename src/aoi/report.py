@@ -70,7 +70,7 @@ def generate_report(
             "num_ok": 0,
             "num_ng": 0,
             "ng_rate": 0.0,
-            "ok_rate": 1.0,
+            "ok_rate": 0.0,
             "defect_stats": None,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }

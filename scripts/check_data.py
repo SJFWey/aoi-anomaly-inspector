@@ -122,7 +122,7 @@ def check_category(category_dir: Path):
     save_path = category_dir / "preview.png"
     plt.savefig(save_path)
     print(f"Visualization saved to {save_path}")
-    if plt.get_backend() != "Agg":
+    if plt.get_backend().lower() != "agg":
         plt.show()
 
 
