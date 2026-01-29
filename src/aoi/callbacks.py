@@ -388,7 +388,11 @@ class PostprocessPredictionWriter(Callback):
         gt_label = getattr(record_batch, "gt_label", None)
         pred_score = getattr(record_batch, "pred_score", None)
         anomaly_map = getattr(record_batch, "anomaly_map", None)
-        images = getattr(record_batch, "image", None)
+
+        # Try to get original image for overlay: prefer original_image, fallback to image
+        images = getattr(record_batch, "original_image", None)
+        if images is None:
+            images = getattr(record_batch, "image", None)
 
         # Fallback: derive pred_score from anomaly_map max
         if pred_score is None and anomaly_map is not None:

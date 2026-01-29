@@ -9,6 +9,7 @@ from .callbacks import (
 from .config import dump_json, dump_yaml, load_yaml
 from .data import build_dataloaders, build_test_loader, build_train_loader
 from .device import as_int_pair, resolve_device
+from .infer_data import ImageFolderDataset, InferenceBatch, build_infer_dataloader
 from .models import build_model
 from .postprocess import (
     DefectInfo,
@@ -17,6 +18,7 @@ from .postprocess import (
     extract_components,
     postprocess_anomaly_map,
 )
+from .report import generate_report, load_predictions, write_report
 from .run import RunPaths, make_run_paths, now_run_id
 from .thresholds import (
     Thresholds,
@@ -47,6 +49,10 @@ __all__ = [
     "build_dataloaders",
     "build_test_loader",
     "build_train_loader",
+    # infer_data
+    "ImageFolderDataset",
+    "InferenceBatch",
+    "build_infer_dataloader",
     # run
     "RunPaths",
     "make_run_paths",
@@ -68,6 +74,10 @@ __all__ = [
     "anomaly_map_to_mask",
     "extract_components",
     "postprocess_anomaly_map",
+    # report
+    "generate_report",
+    "load_predictions",
+    "write_report",
     # viz
     "normalize_anomaly_map",
     "create_heatmap",
