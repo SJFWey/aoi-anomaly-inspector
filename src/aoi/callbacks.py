@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
+
 try:
     from anomalib.metrics import AUPRO
 except ImportError:
@@ -333,8 +334,12 @@ class PostprocessPredictionWriter(Callback):
         image_size: tuple[int, int],
         save_masks: bool = True,
         save_overlays: bool = True,
-        min_defect_area: int = 0,
+        min_defect_area: int = 100,
         overlay_alpha: float = 0.4,
+        apply_morphology: bool = True,
+        morph_kernel_size: int = 7,
+        apply_blur: bool = True,
+        blur_kernel_size: int = 7,
     ) -> None:
         """Initialize the post-process prediction writer.
 
@@ -348,6 +353,10 @@ class PostprocessPredictionWriter(Callback):
             save_overlays: Whether to save overlay visualizations.
             min_defect_area: Minimum area for defect filtering in connected components.
             overlay_alpha: Transparency for overlay heatmap.
+            apply_morphology: Whether to apply morphological operations (opening/closing).
+            morph_kernel_size: Kernel size for morphological operations.
+            apply_blur: Whether to apply Gaussian blur before thresholding.
+            blur_kernel_size: Kernel size for Gaussian blur.
         """
         super().__init__()
         self.thresholds = thresholds
@@ -359,6 +368,10 @@ class PostprocessPredictionWriter(Callback):
         self.save_overlays = save_overlays
         self.min_defect_area = min_defect_area
         self.overlay_alpha = overlay_alpha
+        self.apply_morphology = apply_morphology
+        self.morph_kernel_size = morph_kernel_size
+        self.apply_blur = apply_blur
+        self.blur_kernel_size = blur_kernel_size
 
         self._preds_path = output_dir / "preds.jsonl"
         self._masks_dir = output_dir / "masks"
@@ -436,6 +449,10 @@ class PostprocessPredictionWriter(Callback):
                     amap_np,
                     pixel_threshold=self.thresholds.pixel_threshold,
                     min_defect_area=self.min_defect_area,
+                    apply_morphology=self.apply_morphology,
+                    morph_kernel_size=self.morph_kernel_size,
+                    apply_blur=self.apply_blur,
+                    blur_kernel_size=self.blur_kernel_size,
                 )
 
             # Build prediction record

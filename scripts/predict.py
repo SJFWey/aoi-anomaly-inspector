@@ -66,14 +66,37 @@ def main() -> None:
     parser.add_argument(
         "--min-defect-area",
         type=int,
-        default=0,
-        help="Minimum defect area in pixels for filtering (default: 0)",
+        default=100,
+        help="Minimum defect area in pixels for filtering (default: 100)",
     )
     parser.add_argument(
         "--overlay-alpha",
         type=float,
         default=0.4,
         help="Overlay heatmap transparency (default: 0.4)",
+    )
+    # Post-processing parameters
+    parser.add_argument(
+        "--morph-kernel-size",
+        type=int,
+        default=7,
+        help="Kernel size for morphological operations (default: 7)",
+    )
+    parser.add_argument(
+        "--blur-kernel-size",
+        type=int,
+        default=7,
+        help="Kernel size for Gaussian blur (must be odd, default: 7)",
+    )
+    parser.add_argument(
+        "--no-morphology",
+        action="store_true",
+        help="Disable morphological operations (opening/closing)",
+    )
+    parser.add_argument(
+        "--no-blur",
+        action="store_true",
+        help="Disable Gaussian blur before thresholding",
     )
     args = parser.parse_args()
 
@@ -126,6 +149,10 @@ def main() -> None:
         save_overlays=args.save_overlays,
         min_defect_area=args.min_defect_area,
         overlay_alpha=args.overlay_alpha,
+        apply_morphology=not args.no_morphology,
+        morph_kernel_size=args.morph_kernel_size,
+        apply_blur=not args.no_blur,
+        blur_kernel_size=args.blur_kernel_size,
     )
 
     trainer = Trainer(
@@ -147,6 +174,12 @@ def main() -> None:
     print(f"  Save masks: {args.save_masks}")
     print(f"  Save overlays: {args.save_overlays}")
     print(f"  Min defect area: {args.min_defect_area}")
+    print(
+        f"  Morphology: {'enabled' if not args.no_morphology else 'disabled'} (kernel={args.morph_kernel_size})"
+    )
+    print(
+        f"  Blur: {'enabled' if not args.no_blur else 'disabled'} (kernel={args.blur_kernel_size})"
+    )
 
     trainer.predict(model=model, dataloaders=test_loader, ckpt_path=str(weights_path))
 

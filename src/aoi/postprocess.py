@@ -73,6 +73,10 @@ class PostprocessResult:
 def anomaly_map_to_mask(
     anomaly_map: np.ndarray,
     pixel_threshold: float,
+    apply_morphology: bool = True,
+    morph_kernel_size: int = 7,
+    apply_blur: bool = True,
+    blur_kernel_size: int = 7,
 ) -> np.ndarray:
     """Convert anomaly map to binary mask using pixel threshold.
 
@@ -82,10 +86,23 @@ def anomaly_map_to_mask(
     Args:
         anomaly_map: 2D array of anomaly scores, shape (H, W).
         pixel_threshold: Threshold value; pixels >= threshold are marked as defect.
+        apply_morphology: Whether to apply morphological operations (opening/closing)
+            to reduce noise and smooth boundaries.
+        morph_kernel_size: Kernel size for morphological operations.
+        apply_blur: Whether to apply Gaussian blur before thresholding.
+        blur_kernel_size: Kernel size for Gaussian blur (must be odd).
 
     Returns:
         Binary mask as uint8 array (H, W), values 0 (normal) or 255 (defect).
     """
+    try:
+        import cv2
+    except ImportError as e:
+        raise ImportError(
+            "OpenCV (cv2) is required for mask generation. "
+            "Install with: pip install opencv-python"
+        ) from e
+
     # Ensure 2D
     if anomaly_map.ndim == 3:
         if anomaly_map.shape[0] == 1:
@@ -96,7 +113,29 @@ def anomaly_map_to_mask(
             # Take max across channel dimension
             anomaly_map = anomaly_map.max(axis=0)
 
+    # Optional: Apply Gaussian blur to smooth the anomaly map before thresholding
+    if apply_blur:
+        # Ensure kernel size is odd
+        blur_kernel_size = (
+            blur_kernel_size if blur_kernel_size % 2 == 1 else blur_kernel_size + 1
+        )
+        anomaly_map = cv2.GaussianBlur(
+            anomaly_map.astype(np.float32), (blur_kernel_size, blur_kernel_size), 0
+        )
+
+    # Threshold to create binary mask
     mask = (anomaly_map >= pixel_threshold).astype(np.uint8) * 255
+
+    # Optional: Apply morphological operations to clean up the mask
+    if apply_morphology:
+        kernel = cv2.getStructuringElement(
+            cv2.MORPH_ELLIPSE, (morph_kernel_size, morph_kernel_size)
+        )
+        # Opening: Remove small noise (erosion followed by dilation)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        # Closing: Fill small holes (dilation followed by erosion)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
     return mask
 
 
@@ -190,7 +229,11 @@ def extract_components(
 def postprocess_anomaly_map(
     anomaly_map: np.ndarray,
     pixel_threshold: float,
-    min_defect_area: int = 0,
+    min_defect_area: int = 100,
+    apply_morphology: bool = True,
+    morph_kernel_size: int = 7,
+    apply_blur: bool = True,
+    blur_kernel_size: int = 7,
 ) -> PostprocessResult:
     """Full post-processing pipeline for an anomaly map.
 
@@ -200,12 +243,23 @@ def postprocess_anomaly_map(
     Args:
         anomaly_map: 2D or 3D array of anomaly scores.
         pixel_threshold: Threshold for binary mask generation.
-        min_defect_area: Minimum area for defect filtering.
+        min_defect_area: Minimum area for defect filtering (default: 50 pixels).
+        apply_morphology: Whether to apply opening/closing operations.
+        morph_kernel_size: Kernel size for morphological operations.
+        apply_blur: Whether to apply Gaussian blur before thresholding.
+        blur_kernel_size: Kernel size for Gaussian blur.
 
     Returns:
         PostprocessResult containing mask and defect information.
     """
-    mask = anomaly_map_to_mask(anomaly_map, pixel_threshold)
+    mask = anomaly_map_to_mask(
+        anomaly_map,
+        pixel_threshold,
+        apply_morphology=apply_morphology,
+        morph_kernel_size=morph_kernel_size,
+        apply_blur=apply_blur,
+        blur_kernel_size=blur_kernel_size,
+    )
     defects = extract_components(mask, anomaly_map, min_area=min_defect_area)
 
     total_area = sum(d.area for d in defects)
