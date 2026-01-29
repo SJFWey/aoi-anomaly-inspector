@@ -1,0 +1,29 @@
+run:
+  output_root: runs
+  run_id: null # auto-generate if null
+  save_predictions: true
+
+seed: 42
+device: auto # auto|cpu|cuda
+
+data:
+  root: datasets/mvtech
+  category: transistor
+  train_batch_size: 32
+  eval_batch_size: 32
+  num_workers: 0
+
+preprocessing:
+  image_size: [256, 256]
+
+model:
+  name: padim
+  backbone: resnet18
+  layers: [layer1, layer2, layer3]
+  pre_trained: true
+  n_features: null
+
+trainer:
+  precision: 32
+  max_epochs: 1
+  log_every_n_steps: 10
