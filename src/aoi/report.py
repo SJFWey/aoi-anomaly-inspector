@@ -102,7 +102,7 @@ def generate_report(
         total_defect_areas = [
             p.get("total_defect_area", 0)
             for p in ng_predictions
-            if p.get("total_defect_area")
+            if p.get("total_defect_area") is not None
         ]
 
         # Collect all defect areas for max calculation

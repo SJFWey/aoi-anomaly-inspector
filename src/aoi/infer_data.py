@@ -187,8 +187,12 @@ def build_infer_dataloader(
         try:
             next(iter(loader))
         except PermissionError:
-            print(
-                "PermissionError with dataloader workers; falling back to num_workers=0"
+            import warnings
+
+            warnings.warn(
+                "PermissionError with dataloader workers; falling back to num_workers=0",
+                RuntimeWarning,
+                stacklevel=2,
             )
             loader = DataLoader(
                 dataset=dataset,

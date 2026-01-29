@@ -48,8 +48,12 @@ def build_train_loader(cfg: dict[str, Any]) -> DataLoader:
         try:
             next(iter(loader))
         except PermissionError:
-            print(
-                "PermissionError when spawning dataloader workers; falling back to num_workers=0"
+            import warnings
+
+            warnings.warn(
+                "PermissionError when spawning dataloader workers; falling back to num_workers=0",
+                RuntimeWarning,
+                stacklevel=2,
             )
             loader = DataLoader(
                 dataset=train_dataset,
@@ -119,8 +123,12 @@ def build_dataloaders(cfg: dict[str, Any]) -> tuple[DataLoader, DataLoader, Data
         try:
             next(iter(train_loader))
         except PermissionError:
-            print(
-                "PermissionError when spawning dataloader workers; falling back to num_workers=0"
+            import warnings
+
+            warnings.warn(
+                "PermissionError when spawning dataloader workers; falling back to num_workers=0",
+                RuntimeWarning,
+                stacklevel=2,
             )
             train_loader, train_pred_loader, test_loader = _make_loaders(0)
 
@@ -161,8 +169,12 @@ def build_test_loader(cfg: dict[str, Any]) -> DataLoader:
         try:
             next(iter(loader))
         except PermissionError:
-            print(
-                "PermissionError when spawning dataloader workers; falling back to num_workers=0"
+            import warnings
+
+            warnings.warn(
+                "PermissionError when spawning dataloader workers; falling back to num_workers=0",
+                RuntimeWarning,
+                stacklevel=2,
             )
             loader = DataLoader(
                 dataset=test_dataset,

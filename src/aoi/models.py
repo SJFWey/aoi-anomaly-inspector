@@ -63,6 +63,9 @@ class OnnxExportWrapper(nn.Module):
         else:
             anomaly_map = outputs
 
+        if anomaly_map is None:
+            raise ValueError("Model output does not contain 'anomaly_map'")
+
         # Ensure anomaly_map is (B, 1, H, W)
         if anomaly_map.ndim == 3:
             anomaly_map = anomaly_map.unsqueeze(1)
@@ -120,7 +123,7 @@ def build_model(cfg: dict[str, Any]) -> Padim | Patchcore:
         if center_crop_size
         else None
     )
-    model = Patchcore(
+    patchcore_model = Patchcore(
         backbone=str(model_cfg.get("backbone", "resnet18")),
         layers=list(model_cfg.get("layers", ["layer2", "layer3"])),
         pre_trained=bool(model_cfg.get("pre_trained", True)),
@@ -131,7 +134,7 @@ def build_model(cfg: dict[str, Any]) -> Padim | Patchcore:
         evaluator=False,
         visualizer=False,
     )
-    model.pre_processor = Patchcore.configure_pre_processor(
+    patchcore_model.pre_processor = Patchcore.configure_pre_processor(
         image_size=image_size, center_crop_size=center_crop_size
     )
-    return model
+    return patchcore_model

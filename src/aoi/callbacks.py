@@ -272,7 +272,7 @@ def evaluate_and_write_metrics(
     out_path: Path,
     ckpt_path: Path | str | None = None,
     category: str | None = None,
-    image_size: tuple[int, int] | list[int] | None = None,
+    image_size: int | tuple[int, int] | list[int] | None = None,
     device: str | None = None,
 ) -> MetricsDict:
     """Run test loop, compute AUROC metrics, and write to JSON file.
@@ -305,7 +305,12 @@ def evaluate_and_write_metrics(
     if category is not None:
         metrics["category"] = category
     if image_size is not None:
-        metrics["image_size"] = list(image_size)
+        # Allow square sizes like `256` in configs; normalize to [H, W].
+        metrics["image_size"] = (
+            [int(image_size), int(image_size)]
+            if isinstance(image_size, int)
+            else list(image_size)
+        )
     if device is not None:
         metrics["device"] = device
     dump_json(out_path, metrics)

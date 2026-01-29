@@ -357,10 +357,10 @@ def main() -> int:
             category=category,
             run_id=run_id,
             thresholds={
-                "image_threshold": thresholds.image_threshold,
-                "pixel_threshold": thresholds.pixel_threshold,
-                "quantile_image": thresholds.quantile_image,
-                "quantile_pixel": thresholds.quantile_pixel,
+                "image_threshold": effective_thresholds.image_threshold,
+                "pixel_threshold": effective_thresholds.pixel_threshold,
+                "quantile_image": effective_thresholds.quantile_image,
+                "quantile_pixel": effective_thresholds.quantile_pixel,
             },
         )
         report_path = args.output_dir / "report.json"

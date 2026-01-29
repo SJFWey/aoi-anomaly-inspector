@@ -173,7 +173,7 @@ def extract_components(
         binary_mask, connectivity=8
     )
 
-    defects = []
+    defects: list[DefectInfo] = []
     # Label 0 is background, start from 1
     for label_id in range(1, num_labels):
         area = int(stats[label_id, cv2.CC_STAT_AREA])
