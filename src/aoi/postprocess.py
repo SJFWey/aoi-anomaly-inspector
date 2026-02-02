@@ -11,18 +11,16 @@ All coordinates use the "model input image size" coordinate system.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 import numpy as np
 
-if TYPE_CHECKING:
-    pass
-
 __all__ = [
     "DefectInfo",
+    "PostprocessResult",
     "anomaly_map_to_mask",
     "extract_components",
     "postprocess_anomaly_map",
+    "compute_adaptive_threshold",
 ]
 
 
@@ -74,9 +72,9 @@ def anomaly_map_to_mask(
     anomaly_map: np.ndarray,
     pixel_threshold: float,
     apply_morphology: bool = True,
-    morph_kernel_size: int = 7,
+    morph_kernel_size: int = 11,
     apply_blur: bool = True,
-    blur_kernel_size: int = 7,
+    blur_kernel_size: int = 11,
 ) -> np.ndarray:
     """Convert anomaly map to binary mask using pixel threshold.
 
@@ -229,11 +227,11 @@ def extract_components(
 def postprocess_anomaly_map(
     anomaly_map: np.ndarray,
     pixel_threshold: float,
-    min_defect_area: int = 100,
+    min_defect_area: int = 50,
     apply_morphology: bool = True,
-    morph_kernel_size: int = 7,
+    morph_kernel_size: int = 11,
     apply_blur: bool = True,
-    blur_kernel_size: int = 7,
+    blur_kernel_size: int = 11,
 ) -> PostprocessResult:
     """Full post-processing pipeline for an anomaly map.
 
@@ -270,3 +268,97 @@ def postprocess_anomaly_map(
         num_defects=len(defects),
         total_defect_area=total_area,
     )
+
+
+def compute_adaptive_threshold(
+    anomaly_map: np.ndarray,
+    base_threshold: float,
+    strategy: str = "percentile",
+    percentile: float = 95.0,
+    min_ratio: float = 0.5,
+    max_ratio: float = 1.0,
+) -> float:
+    """Compute an adaptive threshold based on the anomaly map distribution.
+
+    This helps handle cases where:
+    - Base threshold is too high for subtle defects
+    - Anomaly map has different dynamic ranges across samples
+
+    Strategies:
+    - "percentile": Use a percentile of the anomaly map, bounded by base_threshold * [min_ratio, max_ratio]
+    - "otsu": Use Otsu's method on the anomaly map (good for bimodal distributions)
+    - "peak_relative": Set threshold as a fraction of the peak value relative to mean
+      (threshold = mean + (peak - mean) * min_ratio)
+
+    Args:
+        anomaly_map: 2D array of anomaly scores.
+        base_threshold: The base pixel threshold computed from training.
+        strategy: Threshold strategy ("percentile", "otsu", "peak_relative").
+        percentile: Percentile value for "percentile" strategy (default: 95).
+        min_ratio: For percentile: minimum ratio of base_threshold.
+                   For peak_relative: fraction of (peak - mean) to add to mean.
+        max_ratio: Maximum ratio of base_threshold to use.
+
+    Returns:
+        Adaptive threshold value.
+    """
+    # Ensure 2D
+    if anomaly_map.ndim == 3:
+        if anomaly_map.shape[0] == 1:
+            anomaly_map = anomaly_map[0]
+        elif anomaly_map.shape[-1] == 1:
+            anomaly_map = anomaly_map[..., 0]
+        else:
+            anomaly_map = anomaly_map.max(axis=0)
+
+    min_thresh = base_threshold * min_ratio
+    max_thresh = base_threshold * max_ratio
+
+    if strategy == "percentile":
+        # Use a percentile of the current image's anomaly distribution
+        adaptive_thresh = float(np.percentile(anomaly_map, percentile))
+        # Clamp to valid range
+        return float(np.clip(adaptive_thresh, min_thresh, max_thresh))
+
+    elif strategy == "otsu":
+        try:
+            import cv2
+        except ImportError:
+            # Fallback to percentile
+            return float(
+                np.clip(np.percentile(anomaly_map, percentile), min_thresh, max_thresh)
+            )
+
+        # Normalize to 0-255 for Otsu
+        norm_map = anomaly_map - anomaly_map.min()
+        if norm_map.max() > 0:
+            norm_map = (norm_map / norm_map.max() * 255).astype(np.uint8)
+        else:
+            return base_threshold
+
+        otsu_thresh, _ = cv2.threshold(
+            norm_map, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
+        # Convert back to original scale
+        adaptive_thresh = anomaly_map.min() + (otsu_thresh / 255.0) * (
+            anomaly_map.max() - anomaly_map.min()
+        )
+        return float(np.clip(adaptive_thresh, min_thresh, max_thresh))
+
+    elif strategy == "peak_relative":
+        # Set threshold relative to the range between mean and peak
+        # threshold = mean + (peak - mean) * factor
+        # This ensures threshold adapts to the image's actual anomaly range
+        peak = float(anomaly_map.max())
+        mean = float(anomaly_map.mean())
+
+        # Use a high percentile (e.g., 0.7-0.9) of the range
+        # min_ratio here means: what fraction of (peak-mean) above mean
+        adaptive_thresh = mean + (peak - mean) * (1.0 - min_ratio)
+
+        # Still respect the base threshold as a floor
+        return float(max(adaptive_thresh, min_thresh))
+
+    else:
+        # Unknown strategy, return base threshold
+        return base_threshold

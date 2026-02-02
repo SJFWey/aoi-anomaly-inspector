@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-__all__ = ["generate_report", "load_predictions"]
+__all__ = ["generate_report", "load_predictions", "write_report"]
 
 
 def load_predictions(preds_path: Path | str) -> list[dict[str, Any]]:

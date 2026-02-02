@@ -7,6 +7,8 @@ seed: 42
 device: auto # auto|cpu|cuda
 
 data:
+  # Dataset root. Default assumes you place MVTec AD under this repo:
+  # datasets/mvtech/<category>/(train|test|ground_truth)/...
   root: datasets/mvtech
   category: transistor
   train_batch_size: 32
@@ -15,15 +17,23 @@ data:
 
 preprocessing:
   image_size: [256, 256]
+  # Sweep candidates: [224, 224], [256, 256], [320, 320], [384, 384]
   center_crop_size: null
 
 model:
   name: patchcore
   backbone: resnet18
   layers: [layer2, layer3]
+  # Sweep candidates:
+  #   - [layer2, layer3]  # Standard (default)
+  #   - [layer2]          # Single mid-level layer
+  #   - [layer3]          # Single high-level layer
+  #   - [layer1, layer2, layer3]  # Multi-scale (more memory)
   pre_trained: true
   coreset_sampling_ratio: 0.01
+  # Sweep candidates: 0.01, 0.05, 0.1 (higher = more memory, potentially better)
   num_neighbors: 9
+  # Sweep candidates: 3, 5, 9, 15
 
 trainer:
   precision: 32

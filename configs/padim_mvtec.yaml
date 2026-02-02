@@ -7,6 +7,8 @@ seed: 42
 device: auto # auto|cpu|cuda
 
 data:
+  # Dataset root. Default assumes you place MVTec AD under this repo:
+  # datasets/mvtech/<category>/(train|test|ground_truth)/...
   root: datasets/mvtech
   category: transistor
   train_batch_size: 32
@@ -15,11 +17,17 @@ data:
 
 preprocessing:
   image_size: [256, 256]
+  # Sweep candidates: [224, 224], [256, 256], [320, 320], [384, 384]
 
 model:
   name: padim
   backbone: resnet18
   layers: [layer1, layer2, layer3]
+  # Sweep candidates:
+  #   - [layer1, layer2, layer3]  # Full multi-scale (default)
+  #   - [layer2, layer3]          # Mid-high level features
+  #   - [layer1, layer2]          # Low-mid level features
+  #   - [layer2, layer3, layer4]  # High-level features (if backbone supports)
   pre_trained: true
   n_features: null
 

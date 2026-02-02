@@ -7,4 +7,4 @@
 | Pixel AUPRO | N/A | N/A |
 
 **Image Size**: [256, 256]  
-**Device**: cpu
+**Device**: auto

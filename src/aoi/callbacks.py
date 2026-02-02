@@ -21,8 +21,8 @@ from lightning.pytorch.callbacks import Callback
 from sklearn.metrics import roc_auc_score
 
 from .config import dump_json
-from .postprocess import postprocess_anomaly_map
-from .viz import save_mask, save_overlay_with_mask
+from .postprocess import postprocess_anomaly_map, compute_adaptive_threshold
+from .viz import save_mask, save_overlay, save_defect_overlay
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader
@@ -339,12 +339,17 @@ class PostprocessPredictionWriter(Callback):
         image_size: tuple[int, int],
         save_masks: bool = True,
         save_overlays: bool = True,
-        min_defect_area: int = 100,
+        min_defect_area: int = 50,
         overlay_alpha: float = 0.4,
         apply_morphology: bool = True,
-        morph_kernel_size: int = 7,
+        morph_kernel_size: int = 3,
         apply_blur: bool = True,
-        blur_kernel_size: int = 7,
+        blur_kernel_size: int = 3,
+        overlay_style: str = "professional",
+        colormap: str = "turbo",
+        use_adaptive_threshold: bool = False,
+        adaptive_strategy: str = "percentile",
+        adaptive_percentile: float = 95.0,
     ) -> None:
         """Initialize the post-process prediction writer.
 
@@ -356,12 +361,17 @@ class PostprocessPredictionWriter(Callback):
             image_size: Model input image size as (H, W) for metadata.
             save_masks: Whether to save binary mask images.
             save_overlays: Whether to save overlay visualizations.
-            min_defect_area: Minimum area for defect filtering in connected components.
+            min_defect_area: Minimum area for defect filtering (default: 50).
             overlay_alpha: Transparency for overlay heatmap.
-            apply_morphology: Whether to apply morphological operations (opening/closing).
-            morph_kernel_size: Kernel size for morphological operations.
+            apply_morphology: Whether to apply morphological operations.
+            morph_kernel_size: Kernel size for morphological operations (default: 3).
             apply_blur: Whether to apply Gaussian blur before thresholding.
-            blur_kernel_size: Kernel size for Gaussian blur.
+            blur_kernel_size: Kernel size for Gaussian blur (default: 3).
+            overlay_style: Visualization style ('standard', 'professional', 'defect_only').
+            colormap: Colormap for heatmap.
+            use_adaptive_threshold: Whether to use adaptive thresholding per image.
+            adaptive_strategy: Strategy for adaptive threshold ('percentile', 'otsu', 'peak_relative').
+            adaptive_percentile: Percentile for adaptive threshold (default: 95).
         """
         super().__init__()
         self.thresholds = thresholds
@@ -377,6 +387,11 @@ class PostprocessPredictionWriter(Callback):
         self.morph_kernel_size = morph_kernel_size
         self.apply_blur = apply_blur
         self.blur_kernel_size = blur_kernel_size
+        self.overlay_style = overlay_style
+        self.colormap = colormap
+        self.use_adaptive_threshold = use_adaptive_threshold
+        self.adaptive_strategy = adaptive_strategy
+        self.adaptive_percentile = adaptive_percentile
 
         self._preds_path = output_dir / "preds.jsonl"
         self._masks_dir = output_dir / "masks"
@@ -449,10 +464,22 @@ class PostprocessPredictionWriter(Callback):
 
             # Post-process anomaly map
             postprocess_result = None
+            effective_pixel_threshold = self.thresholds.pixel_threshold
             if amap_np is not None:
+                # Compute adaptive threshold if enabled
+                if self.use_adaptive_threshold:
+                    effective_pixel_threshold = compute_adaptive_threshold(
+                        amap_np,
+                        base_threshold=self.thresholds.pixel_threshold,
+                        strategy=self.adaptive_strategy,
+                        percentile=self.adaptive_percentile,
+                        min_ratio=0.5,
+                        max_ratio=1.0,
+                    )
+
                 postprocess_result = postprocess_anomaly_map(
                     amap_np,
-                    pixel_threshold=self.thresholds.pixel_threshold,
+                    pixel_threshold=effective_pixel_threshold,
                     min_defect_area=self.min_defect_area,
                     apply_morphology=self.apply_morphology,
                     morph_kernel_size=self.morph_kernel_size,
@@ -470,6 +497,7 @@ class PostprocessPredictionWriter(Callback):
                 "pred_score": score,
                 "image_threshold": self.thresholds.image_threshold,
                 "pixel_threshold": self.thresholds.pixel_threshold,
+                "effective_pixel_threshold": effective_pixel_threshold,
                 "label": label,
                 "is_anomaly": is_anomaly,
             }
@@ -513,13 +541,37 @@ class PostprocessPredictionWriter(Callback):
                         img_np = np.concatenate([img_np] * 3, axis=-1)
 
                     overlay_path = self._overlays_dir / f"{out_name}.png"
-                    save_overlay_with_mask(
-                        img_np,
-                        amap_np,
-                        postprocess_result.mask,
-                        overlay_path,
-                        alpha=self.overlay_alpha,
-                    )
+
+                    if self.overlay_style == "professional":
+                        save_defect_overlay(
+                            img_np,
+                            amap_np,
+                            postprocess_result.mask,
+                            overlay_path,
+                            pixel_threshold=self.thresholds.pixel_threshold,
+                            alpha_defect=self.overlay_alpha,
+                            alpha_normal=0.0,
+                            colormap=self.colormap,
+                        )
+                    elif self.overlay_style == "defect_only":
+                        save_overlay(
+                            img_np,
+                            amap_np,
+                            postprocess_result.mask,
+                            overlay_path,
+                            alpha=self.overlay_alpha,
+                            colormap=self.colormap,
+                            mask_only_heatmap=True,
+                        )
+                    else:  # standard
+                        save_overlay(
+                            img_np,
+                            amap_np,
+                            postprocess_result.mask,
+                            overlay_path,
+                            alpha=self.overlay_alpha,
+                            colormap=self.colormap,
+                        )
                     row["overlay_path"] = str(overlay_path.relative_to(self.output_dir))
 
             self._f.write(json.dumps(row, ensure_ascii=False) + "\n")

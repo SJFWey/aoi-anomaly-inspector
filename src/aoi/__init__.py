@@ -32,7 +32,6 @@ from .viz import (
     normalize_anomaly_map,
     save_mask,
     save_overlay,
-    save_overlay_with_mask,
 )
 
 __all__ = [
@@ -83,5 +82,4 @@ __all__ = [
     "create_heatmap",
     "save_mask",
     "save_overlay",
-    "save_overlay_with_mask",
 ]

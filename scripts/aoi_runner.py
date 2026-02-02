@@ -173,6 +173,21 @@ The model_dir should contain:
         help="Multiply pixel threshold by this factor to reduce noise (default: 1.0). "
         "Recommended: 3.0 for PADIM, 1.2 for PATCHCORE",
     )
+    # Visualization style options
+    parser.add_argument(
+        "--overlay-style",
+        type=str,
+        default="professional",
+        choices=["standard", "professional", "defect_only"],
+        help="Overlay visualization style (default: professional)",
+    )
+    parser.add_argument(
+        "--colormap",
+        type=str,
+        default="turbo",
+        choices=["jet", "turbo", "hot", "inferno", "viridis"],
+        help="Colormap for heatmap visualization (default: turbo)",
+    )
 
     return parser.parse_args()
 
@@ -273,7 +288,10 @@ def main() -> int:
     print(
         f"  Blur:              {'enabled' if not args.no_blur else 'disabled'} (kernel={args.blur_kernel_size})"
     )
+    print(f"  Overlay style:     {args.overlay_style}")
+    print(f"  Colormap:          {args.colormap}")
     print(f"  Recursive scan:    {args.recursive}")
+    print("=" * 60)
     print("=" * 60)
 
     # Build dataloader for input images
@@ -328,6 +346,8 @@ def main() -> int:
         morph_kernel_size=args.morph_kernel_size,
         apply_blur=not args.no_blur,
         blur_kernel_size=args.blur_kernel_size,
+        overlay_style=args.overlay_style,
+        colormap=args.colormap,
     )
 
     # Create trainer

@@ -66,7 +66,7 @@ def parse_args() -> argparse.Namespace:
 
 def export_model(
     run_dir: Path,
-    opset_version: int = 14,
+    opset_version: int = 18,
     output_name: str = "model.onnx",
     dynamic_batch: bool = True,
 ) -> Path:
@@ -135,7 +135,7 @@ def export_model(
     # Create dummy input
     # Shape: (batch, channels, height, width)
     batch_size = 1
-    dummy_input = torch.randn(batch_size, 3, image_size[0], image_size[1])
+    dummy_input = torch.rand(batch_size, 3, image_size[0], image_size[1])
 
     # Verify forward pass works
     print("Verifying forward pass...")

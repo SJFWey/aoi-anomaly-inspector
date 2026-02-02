@@ -66,8 +66,8 @@ def main() -> None:
     parser.add_argument(
         "--min-defect-area",
         type=int,
-        default=100,
-        help="Minimum defect area in pixels for filtering (default: 100)",
+        default=50,
+        help="Minimum defect area in pixels for filtering (default: 50)",
     )
     parser.add_argument(
         "--overlay-alpha",
@@ -79,14 +79,14 @@ def main() -> None:
     parser.add_argument(
         "--morph-kernel-size",
         type=int,
-        default=7,
-        help="Kernel size for morphological operations (default: 7)",
+        default=3,
+        help="Kernel size for morphological operations (default: 3, use smaller for fine defects)",
     )
     parser.add_argument(
         "--blur-kernel-size",
         type=int,
-        default=7,
-        help="Kernel size for Gaussian blur (must be odd, default: 7)",
+        default=3,
+        help="Kernel size for Gaussian blur (must be odd, default: 3)",
     )
     parser.add_argument(
         "--no-morphology",
@@ -98,11 +98,45 @@ def main() -> None:
         action="store_true",
         help="Disable Gaussian blur before thresholding",
     )
+    # Visualization style options
+    parser.add_argument(
+        "--overlay-style",
+        type=str,
+        default="professional",
+        choices=["standard", "professional", "defect_only"],
+        help="Overlay visualization style (default: professional)",
+    )
+    parser.add_argument(
+        "--colormap",
+        type=str,
+        default="turbo",
+        choices=["jet", "turbo", "hot", "inferno", "viridis"],
+        help="Colormap for heatmap visualization (default: turbo)",
+    )
     parser.add_argument(
         "--pixel-threshold-mult",
         type=float,
-        default=1.0,
-        help="Multiply pixel threshold by this factor to reduce noise (default: 1.0)",
+        default=0.7,
+        help="Multiply pixel threshold by this factor (default: 0.7 for better sensitivity)",
+    )
+    # Adaptive threshold options
+    parser.add_argument(
+        "--adaptive-threshold",
+        action="store_true",
+        help="Use adaptive thresholding based on per-image anomaly distribution",
+    )
+    parser.add_argument(
+        "--adaptive-strategy",
+        type=str,
+        default="percentile",
+        choices=["percentile", "otsu", "peak_relative"],
+        help="Adaptive threshold strategy (default: percentile)",
+    )
+    parser.add_argument(
+        "--adaptive-percentile",
+        type=float,
+        default=95.0,
+        help="Percentile for adaptive threshold (default: 95.0)",
     )
     args = parser.parse_args()
 
@@ -176,6 +210,11 @@ def main() -> None:
         morph_kernel_size=args.morph_kernel_size,
         apply_blur=not args.no_blur,
         blur_kernel_size=args.blur_kernel_size,
+        overlay_style=args.overlay_style,
+        colormap=args.colormap,
+        use_adaptive_threshold=args.adaptive_threshold,
+        adaptive_strategy=args.adaptive_strategy,
+        adaptive_percentile=args.adaptive_percentile,
     )
 
     trainer = Trainer(
@@ -210,6 +249,12 @@ def main() -> None:
     print(
         f"  Blur: {'enabled' if not args.no_blur else 'disabled'} (kernel={args.blur_kernel_size})"
     )
+    print(f"  Overlay style: {args.overlay_style}")
+    print(f"  Colormap: {args.colormap}")
+    if args.adaptive_threshold:
+        print(
+            f"  Adaptive threshold: enabled ({args.adaptive_strategy}, p={args.adaptive_percentile})"
+        )
 
     trainer.predict(model=model, dataloaders=test_loader, ckpt_path=str(weights_path))
 
