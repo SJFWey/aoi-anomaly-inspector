@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +29,7 @@ def now_run_id() -> str:
     Returns:
         Run ID in the format 'YYYYMMDD_HHMMSS' (UTC).
     """
-    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
 
 def make_run_paths(cfg: dict[str, Any]) -> RunPaths:

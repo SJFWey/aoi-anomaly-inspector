@@ -21,8 +21,8 @@ from lightning.pytorch.callbacks import Callback
 from sklearn.metrics import roc_auc_score
 
 from .config import dump_json
-from .postprocess import postprocess_anomaly_map, compute_adaptive_threshold
-from .viz import save_mask, save_overlay, save_defect_overlay
+from .postprocess import compute_adaptive_threshold, postprocess_anomaly_map
+from .viz import save_defect_overlay, save_mask, save_overlay
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader
@@ -43,9 +43,7 @@ MetricsDict = dict[str, MetricsValue]
 class JsonlPredictionWriter(Callback):
     """Callback to write predictions to a JSONL file during predict loop."""
 
-    def __init__(
-        self, *, out_path: Path, split: str, model: str, category: str
-    ) -> None:
+    def __init__(self, *, out_path: Path, split: str, model: str, category: str) -> None:
         """Initialize the prediction writer.
 
         Args:
@@ -88,12 +86,8 @@ class JsonlPredictionWriter(Callback):
         if pred_score is None and anomaly_map is not None:
             pred_score = anomaly_map.amax(dim=(-2, -1))
 
-        anomaly_max = (
-            anomaly_map.amax(dim=(-2, -1)) if anomaly_map is not None else None
-        )
-        anomaly_mean = (
-            anomaly_map.float().mean(dim=(-2, -1)) if anomaly_map is not None else None
-        )
+        anomaly_max = anomaly_map.amax(dim=(-2, -1)) if anomaly_map is not None else None
+        anomaly_mean = anomaly_map.float().mean(dim=(-2, -1)) if anomaly_map is not None else None
 
         for i, image_path in enumerate(image_paths):
             row = {
@@ -102,15 +96,9 @@ class JsonlPredictionWriter(Callback):
                 "model": self.model,
                 "category": self.category,
                 "gt_label": int(gt_label[i].item()) if gt_label is not None else None,
-                "pred_score": float(pred_score[i].item())
-                if pred_score is not None
-                else None,
-                "anomaly_max": float(anomaly_max[i].item())
-                if anomaly_max is not None
-                else None,
-                "anomaly_mean": float(anomaly_mean[i].item())
-                if anomaly_mean is not None
-                else None,
+                "pred_score": float(pred_score[i].item()) if pred_score is not None else None,
+                "anomaly_max": float(anomaly_max[i].item()) if anomaly_max is not None else None,
+                "anomaly_mean": float(anomaly_mean[i].item()) if anomaly_mean is not None else None,
             }
             self._f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
@@ -164,20 +152,12 @@ class MetricCollector(Callback):
             pred_score = anomaly_map.amax(dim=(-2, -1))
 
         if gt_label is not None and pred_score is not None:
-            self.image_labels.append(
-                gt_label.detach().cpu().to(torch.int32).view(-1).numpy()
-            )
-            self.image_scores.append(
-                pred_score.detach().cpu().to(torch.float32).view(-1).numpy()
-            )
+            self.image_labels.append(gt_label.detach().cpu().to(torch.int32).view(-1).numpy())
+            self.image_scores.append(pred_score.detach().cpu().to(torch.float32).view(-1).numpy())
 
         if anomaly_map is not None and gt_mask is not None:
-            self.pixel_scores.append(
-                anomaly_map.detach().cpu().to(torch.float32).flatten().numpy()
-            )
-            self.pixel_labels.append(
-                gt_mask.detach().cpu().to(torch.int32).flatten().numpy()
-            )
+            self.pixel_scores.append(anomaly_map.detach().cpu().to(torch.float32).flatten().numpy())
+            self.pixel_labels.append(gt_mask.detach().cpu().to(torch.int32).flatten().numpy())
             # Keep 2D maps for AUPRO (squeeze batch dim if needed)
             amap_2d = anomaly_map.detach().cpu().to(torch.float32)
             mask_2d = gt_mask.detach().cpu().to(torch.int32)
@@ -191,36 +171,24 @@ class MetricCollector(Callback):
             Dictionary with 'image_AUROC', 'pixel_AUROC', and 'pixel_AUPRO' keys.
         """
         y_true = (
-            np.concatenate(self.image_labels)
-            if self.image_labels
-            else np.array([], dtype=np.int32)
+            np.concatenate(self.image_labels) if self.image_labels else np.array([], dtype=np.int32)
         )
         y_score = (
             np.concatenate(self.image_scores)
             if self.image_scores
             else np.array([], dtype=np.float32)
         )
-        image_auroc = (
-            float(roc_auc_score(y_true, y_score))
-            if len(np.unique(y_true)) >= 2
-            else None
-        )
+        image_auroc = float(roc_auc_score(y_true, y_score)) if len(np.unique(y_true)) >= 2 else None
 
         p_true = (
-            np.concatenate(self.pixel_labels)
-            if self.pixel_labels
-            else np.array([], dtype=np.int32)
+            np.concatenate(self.pixel_labels) if self.pixel_labels else np.array([], dtype=np.int32)
         )
         p_score = (
             np.concatenate(self.pixel_scores)
             if self.pixel_scores
             else np.array([], dtype=np.float32)
         )
-        pixel_auroc = (
-            float(roc_auc_score(p_true, p_score))
-            if len(np.unique(p_true)) >= 2
-            else None
-        )
+        pixel_auroc = float(roc_auc_score(p_true, p_score)) if len(np.unique(p_true)) >= 2 else None
 
         # Compute AUPRO using anomalib's metric
         pixel_aupro = self._compute_aupro()
@@ -245,9 +213,7 @@ class MetricCollector(Callback):
             aupro_metric = AUPRO(fpr_limit=0.3)
 
             # Update metric with all collected 2D maps
-            for preds, target in zip(
-                self.pixel_scores_2d, self.pixel_labels_2d, strict=True
-            ):
+            for preds, target in zip(self.pixel_scores_2d, self.pixel_labels_2d, strict=True):
                 # AUPRO expects preds and target with shape (N, H, W)
                 # Squeeze channel dimension if present (N, 1, H, W) -> (N, H, W)
                 if preds.dim() == 4 and preds.shape[1] == 1:
@@ -268,7 +234,7 @@ def evaluate_and_write_metrics(
     *,
     trainer: Trainer,
     model,  # noqa: ANN001
-    dataloader: "DataLoader",
+    dataloader: DataLoader,
     out_path: Path,
     ckpt_path: Path | str | None = None,
     category: str | None = None,
@@ -307,9 +273,7 @@ def evaluate_and_write_metrics(
     if image_size is not None:
         # Allow square sizes like `256` in configs; normalize to [H, W].
         metrics["image_size"] = (
-            [int(image_size), int(image_size)]
-            if isinstance(image_size, int)
-            else list(image_size)
+            [int(image_size), int(image_size)] if isinstance(image_size, int) else list(image_size)
         )
     if device is not None:
         metrics["device"] = device
@@ -332,7 +296,7 @@ class PostprocessPredictionWriter(Callback):
     def __init__(
         self,
         *,
-        thresholds: "Thresholds",
+        thresholds: Thresholds,
         output_dir: Path,
         model: str,
         category: str,

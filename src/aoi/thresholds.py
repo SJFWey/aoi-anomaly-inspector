@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -80,7 +80,7 @@ class Thresholds:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Thresholds":
+    def from_dict(cls, d: dict[str, Any]) -> Thresholds:
         """Create from dictionary."""
         return cls(
             image_threshold=float(d["image_threshold"]),
@@ -211,7 +211,7 @@ class ThresholdCollector(Callback):
             num_train_images=self._num_images,
             pixel_sample_per_image=self.pixel_sample_per_image,
             pixel_sample_seed=self.pixel_sample_seed,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             script_version="2.0.0",
         )
 
@@ -371,7 +371,7 @@ def compute_and_save_thresholds(
     *,
     trainer: Trainer,
     model,  # noqa: ANN001
-    dataloader: "DataLoader",
+    dataloader: DataLoader,
     out_path: Path,
     ckpt_path: Path | str | None = None,
     quantile_image: float = 0.995,

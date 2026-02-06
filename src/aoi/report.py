@@ -7,7 +7,7 @@ results (preds.jsonl).
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -72,7 +72,7 @@ def generate_report(
             "ng_rate": 0.0,
             "ok_rate": 0.0,
             "defect_stats": None,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
     # Extract model/category from first prediction if not provided
@@ -116,14 +116,10 @@ def generate_report(
 
         defect_stats = {
             "total_defects": total_defects,
-            "avg_defects_per_ng": total_defects / len(ng_predictions)
-            if ng_predictions
-            else 0.0,
+            "avg_defects_per_ng": total_defects / len(ng_predictions) if ng_predictions else 0.0,
             "max_defect_area": max(all_defect_areas) if all_defect_areas else 0,
             "avg_total_defect_area": (
-                sum(total_defect_areas) / len(total_defect_areas)
-                if total_defect_areas
-                else 0.0
+                sum(total_defect_areas) / len(total_defect_areas) if total_defect_areas else 0.0
             ),
         }
 
@@ -151,7 +147,7 @@ def generate_report(
         "ok_rate": round(ok_rate, 4),
         "score_stats": score_stats,
         "defect_stats": defect_stats,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     return report

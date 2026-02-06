@@ -16,7 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import torch
@@ -211,7 +211,7 @@ def export_model(
             "config_path": str(config_path),
             "weights_path": str(weights_path),
         },
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "torch_version": torch.__version__,
     }
 

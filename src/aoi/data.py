@@ -6,9 +6,8 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from torch.utils.data import DataLoader, Subset
-
 from anomalib.data.datasets.image.mvtecad import MVTecADDataset
+from torch.utils.data import DataLoader, Subset
 
 __all__ = [
     "build_dataloaders",
@@ -72,9 +71,7 @@ def build_train_loader(cfg: dict[str, Any]) -> DataLoader:
     if not category_dir.exists():
         raise FileNotFoundError(f"Category directory not found: {category_dir}")
 
-    train_dataset = MVTecADDataset(
-        root=str(data_root), category=category, split="train"
-    )
+    train_dataset = MVTecADDataset(root=str(data_root), category=category, split="train")
     eval_batch_size = int(data_cfg.get("eval_batch_size", 32))
     num_workers = int(data_cfg.get("num_workers", 0))
 
@@ -101,9 +98,7 @@ def build_dataloaders(cfg: dict[str, Any]) -> tuple[DataLoader, DataLoader, Data
     if not category_dir.exists():
         raise FileNotFoundError(f"Category directory not found: {category_dir}")
 
-    train_dataset = MVTecADDataset(
-        root=str(data_root), category=category, split="train"
-    )
+    train_dataset = MVTecADDataset(root=str(data_root), category=category, split="train")
     test_dataset = MVTecADDataset(root=str(data_root), category=category, split="test")
 
     train_batch_size = int(data_cfg.get("train_batch_size", 32))

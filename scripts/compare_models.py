@@ -10,7 +10,7 @@ import itertools
 import json
 import shutil
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -453,18 +453,12 @@ def main() -> None:
 
         # Copy sample images
         print(f"Copying sample images to {args.output_dir}...")
-        sample_info_a = copy_sample_images(
-            samples_a, args.run_dir_a, args.output_dir, model_a
-        )
-        sample_info_b = copy_sample_images(
-            samples_b, args.run_dir_b, args.output_dir, model_b
-        )
+        sample_info_a = copy_sample_images(samples_a, args.run_dir_a, args.output_dir, model_a)
+        sample_info_b = copy_sample_images(samples_b, args.run_dir_b, args.output_dir, model_b)
 
         # Create comparison grids
         print("Creating comparison grids...")
-        create_comparison_grid(
-            args.output_dir, model_a, model_b, sample_info_a, sample_info_b
-        )
+        create_comparison_grid(args.output_dir, model_a, model_b, sample_info_a, sample_info_b)
 
         # Generate sample markdown
         sample_md = generate_sample_markdown(
@@ -483,7 +477,7 @@ def main() -> None:
                 model_a: sample_info_a,
                 model_b: sample_info_b,
             },
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         report_path = args.output_dir / "comparison_report.json"

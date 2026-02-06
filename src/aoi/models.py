@@ -98,9 +98,7 @@ def build_model(cfg: dict[str, Any]) -> Padim | Patchcore:
         raise ValueError(msg)
 
     pp_cfg = cfg.get("preprocessing", {})
-    image_size = as_int_pair(
-        pp_cfg.get("image_size", (256, 256)), key="preprocessing.image_size"
-    )
+    image_size = as_int_pair(pp_cfg.get("image_size", (256, 256)), key="preprocessing.image_size")
 
     if model_name == "padim":
         model = Padim(

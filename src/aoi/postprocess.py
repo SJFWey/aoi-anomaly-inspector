@@ -97,8 +97,7 @@ def anomaly_map_to_mask(
         import cv2
     except ImportError as e:
         raise ImportError(
-            "OpenCV (cv2) is required for mask generation. "
-            "Install with: pip install opencv-python"
+            "OpenCV (cv2) is required for mask generation. Install with: pip install opencv-python"
         ) from e
 
     # Ensure 2D
@@ -114,9 +113,7 @@ def anomaly_map_to_mask(
     # Optional: Apply Gaussian blur to smooth the anomaly map before thresholding
     if apply_blur:
         # Ensure kernel size is odd
-        blur_kernel_size = (
-            blur_kernel_size if blur_kernel_size % 2 == 1 else blur_kernel_size + 1
-        )
+        blur_kernel_size = blur_kernel_size if blur_kernel_size % 2 == 1 else blur_kernel_size + 1
         anomaly_map = cv2.GaussianBlur(
             anomaly_map.astype(np.float32), (blur_kernel_size, blur_kernel_size), 0
         )
@@ -325,9 +322,7 @@ def compute_adaptive_threshold(
             import cv2
         except ImportError:
             # Fallback to percentile
-            return float(
-                np.clip(np.percentile(anomaly_map, percentile), min_thresh, max_thresh)
-            )
+            return float(np.clip(np.percentile(anomaly_map, percentile), min_thresh, max_thresh))
 
         # Normalize to 0-255 for Otsu
         norm_map = anomaly_map - anomaly_map.min()
@@ -336,9 +331,7 @@ def compute_adaptive_threshold(
         else:
             return base_threshold
 
-        otsu_thresh, _ = cv2.threshold(
-            norm_map, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-        )
+        otsu_thresh, _ = cv2.threshold(norm_map, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         # Convert back to original scale
         adaptive_thresh = anomaly_map.min() + (otsu_thresh / 255.0) * (
             anomaly_map.max() - anomaly_map.min()

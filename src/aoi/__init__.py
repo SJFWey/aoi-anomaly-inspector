@@ -21,8 +21,8 @@ from .postprocess import (
 from .report import generate_report, load_predictions, write_report
 from .run import RunPaths, make_run_paths, now_run_id
 from .thresholds import (
-    Thresholds,
     ThresholdCollector,
+    Thresholds,
     compute_and_save_thresholds,
     load_thresholds,
     save_thresholds,

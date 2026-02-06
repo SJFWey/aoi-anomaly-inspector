@@ -119,8 +119,7 @@ def save_mask(
         import cv2
     except ImportError as e:
         raise ImportError(
-            "OpenCV (cv2) is required for saving images. "
-            "Install with: pip install opencv-python"
+            "OpenCV (cv2) is required for saving images. Install with: pip install opencv-python"
         ) from e
 
     path = Path(path)
@@ -165,8 +164,7 @@ def save_overlay(
         import cv2
     except ImportError as e:
         raise ImportError(
-            "OpenCV (cv2) is required for saving images. "
-            "Install with: pip install opencv-python"
+            "OpenCV (cv2) is required for saving images. Install with: pip install opencv-python"
         ) from e
 
     path = Path(path)
@@ -197,9 +195,7 @@ def save_overlay(
             amap = amap.max(axis=0)
 
     if amap.shape[:2] != (h, w):
-        amap = cv2.resize(
-            amap.astype(np.float32), (w, h), interpolation=cv2.INTER_LINEAR
-        )
+        amap = cv2.resize(amap.astype(np.float32), (w, h), interpolation=cv2.INTER_LINEAR)
 
     # Create heatmap overlay
     normalized = normalize_anomaly_map(amap, vmin=vmin, vmax=vmax)
@@ -209,13 +205,9 @@ def save_overlay(
     if mask_only_heatmap:
         mask_resized_for_blend = mask
         if mask.shape[:2] != (h, w):
-            mask_resized_for_blend = cv2.resize(
-                mask, (w, h), interpolation=cv2.INTER_NEAREST
-            )
+            mask_resized_for_blend = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
         mask_bool = (mask_resized_for_blend > 0)[..., np.newaxis]
-        overlay = np.where(
-            mask_bool, cv2.addWeighted(image, 1 - alpha, heatmap, alpha, 0), image
-        )
+        overlay = np.where(mask_bool, cv2.addWeighted(image, 1 - alpha, heatmap, alpha, 0), image)
     else:
         overlay = cv2.addWeighted(image, 1 - alpha, heatmap, alpha, 0)
 
@@ -225,9 +217,7 @@ def save_overlay(
         mask_resized = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
 
     mask_uint8 = (mask_resized > 0).astype(np.uint8) * 255
-    contours, _ = cv2.findContours(
-        mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
+    contours, _ = cv2.findContours(mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Draw contours (convert RGB to BGR for cv2.drawContours)
     contour_color_bgr = (contour_color[2], contour_color[1], contour_color[0])
@@ -272,8 +262,7 @@ def save_defect_overlay(
         import cv2
     except ImportError as e:
         raise ImportError(
-            "OpenCV (cv2) is required for saving images. "
-            "Install with: pip install opencv-python"
+            "OpenCV (cv2) is required for saving images. Install with: pip install opencv-python"
         ) from e
 
     path = Path(path)
@@ -302,9 +291,7 @@ def save_defect_overlay(
         else:
             amap = amap.max(axis=0)
     if amap.shape[:2] != (h, w):
-        amap = cv2.resize(
-            amap.astype(np.float32), (w, h), interpolation=cv2.INTER_LINEAR
-        )
+        amap = cv2.resize(amap.astype(np.float32), (w, h), interpolation=cv2.INTER_LINEAR)
 
     # Create normalized map for visualization (threshold to max)
     vmin = pixel_threshold * 0.5  # Show some gradient below threshold
@@ -336,9 +323,7 @@ def save_defect_overlay(
     else:
         mask_uint8 = (amap >= pixel_threshold).astype(np.uint8) * 255
 
-    contours, _ = cv2.findContours(
-        mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
+    contours, _ = cv2.findContours(mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contour_color_bgr = (contour_color[2], contour_color[1], contour_color[0])
     overlay_bgr = cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR)
     cv2.drawContours(overlay_bgr, contours, -1, contour_color_bgr, contour_thickness)

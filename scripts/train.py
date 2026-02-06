@@ -1,6 +1,6 @@
 import argparse
 import platform
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import torch
@@ -16,12 +16,8 @@ from aoi.run import make_run_paths
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Train anomalib models on MVTec AD (transistor)."
-    )
-    parser.add_argument(
-        "--config", type=Path, required=True, help="Path to config yaml."
-    )
+    parser = argparse.ArgumentParser(description="Train anomalib models on MVTec AD (transistor).")
+    parser.add_argument("--config", type=Path, required=True, help="Path to config yaml.")
     parser.add_argument(
         "--category",
         type=str,
@@ -34,9 +30,7 @@ def main() -> None:
         default=None,
         help="Override dataset root (contains categories).",
     )
-    parser.add_argument(
-        "--device", type=str, default=None, help="Override device: auto|cpu|cuda."
-    )
+    parser.add_argument("--device", type=str, default=None, help="Override device: auto|cpu|cuda.")
     parser.add_argument(
         "--run_id",
         type=str,
@@ -75,7 +69,7 @@ def main() -> None:
     dump_json(
         run_paths.meta_path,
         {
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "seed": seed,
             "device": str(cfg.get("device", "auto")),
             "accelerator": accelerator,

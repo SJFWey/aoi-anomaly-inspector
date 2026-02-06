@@ -29,9 +29,7 @@ def main() -> None:
         required=True,
         help="Run directory under runs/<model>/<cat>/<id>/",
     )
-    parser.add_argument(
-        "--device", type=str, default=None, help="Override device: auto|cpu|cuda."
-    )
+    parser.add_argument("--device", type=str, default=None, help="Override device: auto|cpu|cuda.")
     # Threshold computation arguments
     parser.add_argument(
         "--compute-thresholds",
@@ -149,9 +147,7 @@ def main() -> None:
         print("\nComputing thresholds from train data...")
         train_loader = build_train_loader(cfg)
         # Handle -1 meaning "use all pixels"
-        pixel_sample = (
-            None if args.pixel_sample_per_image < 0 else args.pixel_sample_per_image
-        )
+        pixel_sample = None if args.pixel_sample_per_image < 0 else args.pixel_sample_per_image
         # Create a fresh trainer for predict (avoid state conflicts)
         threshold_trainer = Trainer(
             accelerator=accelerator,
@@ -181,14 +177,10 @@ def main() -> None:
     # Tune thresholds on validation data if requested
     if args.tune_on_validation:
         print("\nTuning thresholds on validation data...")
-        val_loader = build_validation_loader(
-            cfg, split_ratio=args.val_split_ratio, seed=42
-        )
+        val_loader = build_validation_loader(cfg, split_ratio=args.val_split_ratio, seed=42)
 
         # Handle -1 meaning "use all pixels"
-        pixel_sample = (
-            None if args.pixel_sample_per_image < 0 else args.pixel_sample_per_image
-        )
+        pixel_sample = None if args.pixel_sample_per_image < 0 else args.pixel_sample_per_image
 
         # Collect validation scores and labels
         val_collector = ValidationScoreCollector(
@@ -205,10 +197,7 @@ def main() -> None:
             deterministic=True,
             callbacks=[val_collector],
         )
-        val_trainer.predict(
-            model=model, dataloaders=val_loader, ckpt_path=str(weights_path)
-        )
-        val_trainer.callbacks.remove(val_collector)
+        val_trainer.predict(model=model, dataloaders=val_loader, ckpt_path=str(weights_path))
 
         # Get collected data
         image_scores, image_labels = val_collector.get_image_data()
@@ -241,7 +230,7 @@ def main() -> None:
             pixel_sample_per_image=pixel_sample,
             pixel_sample_seed=args.pixel_sample_seed,
             created_at=datetime.now(timezone.utc).isoformat(),
-            script_version="2.0.0",
+            script_version="1.1.0",
             tuned_on_validation=True,
             image_metric=args.image_metric,
             image_metric_value=optimal["image_metric_value"],
@@ -251,9 +240,7 @@ def main() -> None:
         )
 
         save_thresholds(tuned_thresholds, args.run_dir / "thresholds.json")
-        print(
-            f"\nSaved validation-tuned thresholds: {args.run_dir / 'thresholds.json'}"
-        )
+        print(f"\nSaved validation-tuned thresholds: {args.run_dir / 'thresholds.json'}")
         print(
             f"  Image threshold: {tuned_thresholds.image_threshold:.6f} ({args.image_metric}={optimal['image_metric_value']:.4f})"
         )

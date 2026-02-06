@@ -273,9 +273,7 @@ def main() -> int:
     print(f"  Image threshold:   {thresholds.image_threshold:.6f}")
     print(f"  Pixel threshold:   {thresholds.pixel_threshold:.6f}")
     if args.pixel_threshold_mult != 1.0:
-        effective_pixel_threshold = (
-            thresholds.pixel_threshold * args.pixel_threshold_mult
-        )
+        effective_pixel_threshold = thresholds.pixel_threshold * args.pixel_threshold_mult
         print(
             f"  Pixel thresh mult: {args.pixel_threshold_mult:.2f}x (effective: {effective_pixel_threshold:.6f})"
         )

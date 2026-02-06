@@ -74,8 +74,7 @@ class ImageFolderDataset(Dataset):
 
         if not self.image_paths:
             raise ValueError(
-                f"No images found in {self.root} "
-                f"(extensions: {', '.join(sorted(self.extensions))})"
+                f"No images found in {self.root} (extensions: {', '.join(sorted(self.extensions))})"
             )
 
     def __len__(self) -> int:
@@ -103,7 +102,7 @@ class ImageFolderDataset(Dataset):
         # Load image (BGR)
         img_bgr = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
         if img_bgr is None:
-            raise IOError(f"Failed to load image: {image_path}")
+            raise OSError(f"Failed to load image: {image_path}")
 
         original_h, original_w = img_bgr.shape[:2]
 
@@ -112,9 +111,7 @@ class ImageFolderDataset(Dataset):
 
         # Resize to target size
         target_h, target_w = self.image_size
-        img_resized = cv2.resize(
-            img_rgb, (target_w, target_h), interpolation=cv2.INTER_LINEAR
-        )
+        img_resized = cv2.resize(img_rgb, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
 
         # Convert to float32 and normalize to [0, 1]
         img_float = img_resized.astype(np.float32) / 255.0
@@ -130,7 +127,7 @@ class ImageFolderDataset(Dataset):
 
 
 def _collate_inference_batch(
-    batch: "Sequence[dict[str, Any]]",
+    batch: Sequence[dict[str, Any]],
 ) -> ImageBatch:
     """Collate function for ImageFolderDataset.
 

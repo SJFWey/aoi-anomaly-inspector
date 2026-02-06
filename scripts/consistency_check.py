@@ -17,7 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -85,8 +85,7 @@ def load_onnx_session(onnx_path: Path) -> Any:
         import onnxruntime as ort
     except ImportError as e:
         raise ImportError(
-            "onnxruntime is required for consistency check. "
-            "Install with: pip install onnxruntime"
+            "onnxruntime is required for consistency check. Install with: pip install onnxruntime"
         ) from e
 
     # Use CPU provider for consistency
@@ -272,9 +271,7 @@ def load_real_images(
     # Find images
     extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
     image_paths = sorted(
-        p
-        for p in input_dir.rglob("*")
-        if p.is_file() and p.suffix.lower() in extensions
+        p for p in input_dir.rglob("*") if p.is_file() and p.suffix.lower() in extensions
     )
 
     if not image_paths:
@@ -363,8 +360,7 @@ def run_consistency_check(
         raise FileNotFoundError(f"Weights not found: {weights_path}")
     if not onnx_path.exists():
         raise FileNotFoundError(
-            f"ONNX model not found: {onnx_path}. "
-            "Run scripts/export.py first to generate it."
+            f"ONNX model not found: {onnx_path}. Run scripts/export.py first to generate it."
         )
 
     # Load configuration
@@ -448,7 +444,7 @@ def run_consistency_check(
             "onnx_path": str(onnx_path),
             "config_path": str(config_path),
         },
-        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "checked_at": datetime.now(UTC).isoformat(),
     }
 
     # Determine pass/fail based on tolerances
@@ -512,9 +508,7 @@ def main() -> None:
             print("\nBinary Mask:")
             print(f"  Mean IoU: {metrics['mask']['mean_iou']:.4f}")
             print(f"  Min IoU: {metrics['mask']['min_iou']:.4f}")
-            print(
-                f"  Mean Pixel Agreement: {metrics['mask']['mean_pixel_agreement']:.4f}"
-            )
+            print(f"  Mean Pixel Agreement: {metrics['mask']['mean_pixel_agreement']:.4f}")
 
         print("\n" + "-" * 60)
         if results["passed"]:
