@@ -155,16 +155,49 @@ remain outside the graph.
 
 The executed PatchCore-style run above compared two test images on CPU. It
 passed the configured maximum/mean tolerances of `1e-4` / `1e-5`, with map
-errors `1.27e-6` max and `2.49e-7` mean, score errors `7.75e-7` max and
+errors `1.12e-5` max and `3.77e-7` mean, score errors `7.75e-7` max and
 `5.07e-7` mean, and decision agreement `1.0`.
 
-## Qualitative results
+## Verified MVTec AD results
 
-The tiny fixture demonstrates that artifacts, masks, overlays, and deployment
-paths work together. It is intentionally too small to support qualitative or
-performance claims; use a complete local category and inspect the generated
-`samples/` and `predictions/` artifacts for qualitative review. Historical
-result images without reproducible source artifacts are intentionally not kept.
+The following results were generated with this repository's `run_pipeline.py`
+on CPU using ResNet-18 `layer2`, `image_size=256`, seed `42`, and the tracked
+PatchCore-style configuration. Thresholds were calibrated only from each
+category's `train/good` split. All three ONNX exports passed native/ONNX
+consistency checks with decision agreement `1.0`.
+
+| Category | Image AUROC | Pixel AUROC | Image F1 | Pixel F1 | Pixel IoU |
+|---|---:|---:|---:|---:|---:|
+| bottle | 1.0000 | 0.9762 | 0.9756 | 0.6932 | 0.5304 |
+| hazelnut | 0.8739 | 0.9636 | 0.3133 | 0.2916 | 0.1707 |
+| cable | 0.8420 | 0.8264 | 0.0632 | 0.1712 | 0.0936 |
+
+The uneven F1 and IoU values are intentional evidence of threshold sensitivity
+and difficult localization, not numbers hidden behind AUROC alone. Full metrics,
+thresholds, model/ONNX hashes, consistency errors, and selected source cases are
+recorded in [`verified_results.json`](docs/assets/results/verified_results.json).
+
+Each diagnostic composite shows the input with GT contour, a threshold-relative
+heatmap, prediction overlay, ground-truth mask, predicted mask, and an error map
+(TP green, FP red, FN blue).
+
+### Bottle
+
+| Normal / OK | Detected defect / NG | Hard case / missed contamination |
+|---|---|---|
+| ![Bottle normal OK](docs/assets/results/patchcore_bottle_ok.png) | ![Bottle detected defect](docs/assets/results/patchcore_bottle_ng.png) | ![Bottle missed contamination](docs/assets/results/patchcore_bottle_hard.png) |
+
+### Hazelnut
+
+| Normal / OK | Detected print defect / NG | Hard case / missed print defect |
+|---|---|---|
+| ![Hazelnut normal OK](docs/assets/results/patchcore_hazelnut_ok.png) | ![Hazelnut detected print defect](docs/assets/results/patchcore_hazelnut_ng.png) | ![Hazelnut missed print defect](docs/assets/results/patchcore_hazelnut_hard.png) |
+
+### Cable
+
+| Normal / OK | Detected bent wire / NG | Hard case / missed inner-insulation cut |
+|---|---|---|
+| ![Cable normal OK](docs/assets/results/patchcore_cable_ok.png) | ![Cable detected bent wire](docs/assets/results/patchcore_cable_ng.png) | ![Cable missed inner-insulation cut](docs/assets/results/patchcore_cable_hard.png) |
 
 ## Verification and limitations
 
