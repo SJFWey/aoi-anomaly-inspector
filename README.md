@@ -22,7 +22,7 @@ flowchart LR
 | Detector | Canonical method | This repository's implementation |
 |---|---|---|
 | PaDiM | Per-location multivariate Gaussian with covariance modeling | PaDiM-style diagonal approximation: squared standardized feature distance using per-location mean and population standard deviation, with a `0.05` floor for finite one-image behavior and stable native/ONNX scoring. |
-| PatchCore | Memory bank with greedy coreset selection and nearest-neighbour scoring | PatchCore-style random coreset approximation: deterministic sampled normalized patch bank and nearest-neighbour distance. |
+| PatchCore | Memory bank with greedy coreset selection and nearest-neighbour scoring | PatchCore-style random coreset approximation: deterministic sampled normalized patch bank and nearest-neighbour distance with a smooth near-zero transform for stable native/ONNX output. |
 
 Both variants use a frozen ResNet-18 feature extractor. The saved model state
 contains the exact backbone weights, selected channels, and fitted feature state;

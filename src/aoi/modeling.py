@@ -15,6 +15,7 @@ from aoi.data import bgr_to_rgb_unit_tensor, read_bgr
 
 
 PADIM_STD_FLOOR = 5e-2
+PATCHCORE_DISTANCE_EPS = 1e-4
 
 
 @dataclass(frozen=True)
@@ -108,11 +109,12 @@ class AnomalyTensorModel(nn.Module):
         patch_sq = (patches * patches).sum(dim=-1, keepdim=True)
         bank_sq = (bank * bank).sum(dim=-1).view(1, 1, -1)
         distance_sq = (patch_sq + bank_sq - 2.0 * patches @ bank.T).clamp_min(0.0)
-        # Equivalent normalized vectors can leave small positive residuals after
-        # backend-specific matrix multiplication. Treat float32 roundoff as zero
-        # before sqrt amplifies it into a visible native/ONNX discrepancy.
-        distance_sq = torch.where(distance_sq <= 1e-6, torch.zeros_like(distance_sq), distance_sq)
-        nearest = distance_sq.min(dim=-1).values.sqrt()
+        # A smooth epsilon-shifted square root preserves zero distance while
+        # avoiding the discontinuity and near-zero amplification that otherwise
+        # make native and ONNX matrix multiplication disagree at isolated pixels.
+        nearest_sq = distance_sq.min(dim=-1).values
+        nearest = (nearest_sq + PATCHCORE_DISTANCE_EPS).sqrt() - PATCHCORE_DISTANCE_EPS**0.5
+        nearest = nearest.clamp_min(0.0)
         return nearest.reshape(features.shape[0], features.shape[2], features.shape[3])
 
     def forward(self, images: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:

@@ -37,6 +37,19 @@ def test_patchcore_head_matches_squared_distance_reference() -> None:
     assert torch.allclose(distance, torch.zeros(1, 1, 1), atol=1e-6)
 
 
+def test_patchcore_distance_is_continuous_near_zero() -> None:
+    bank = torch.tensor([[1.0, 0.0]])
+    low_angle = torch.tensor(0.0009)
+    high_angle = torch.tensor(0.0011)
+    low = torch.stack((torch.cos(low_angle), torch.sin(low_angle))).view(1, 2, 1, 1)
+    high = torch.stack((torch.cos(high_angle), torch.sin(high_angle))).view(1, 2, 1, 1)
+
+    low_distance = AnomalyTensorModel.patchcore_distance(low, bank)
+    high_distance = AnomalyTensorModel.patchcore_distance(high, bank)
+
+    assert float(high_distance - low_distance) < 1e-4
+
+
 def test_model_state_rejects_non_finite_tensors() -> None:
     state = _padim_state()
     state["mean"][0, 0, 0] = float("nan")
