@@ -1,0 +1,26 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.vscode/settings.json
+
+# Local data and generated experiment outputs
+datasets/
+runs/
+outputs/
+*.onnx
+*.pt
+
+.codex/
+references/
+
+# Interview planning notes kept local, not part of the public project.
+prompt.md
+todo.md
+project-03

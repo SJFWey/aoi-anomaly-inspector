@@ -1,0 +1,27 @@
+seed: 42
+dataset:
+  root: examples/mvtec_tiny
+  category: bottle
+  image_size: 64
+model:
+  name: patchcore
+  backbone: resnet18
+  layers: [layer2]
+  pre_trained: false
+  n_features: 8
+  coreset_sampling_ratio: 0.25
+  max_coreset_patches: 64
+trainer:
+  device: cpu
+  batch_size: 2
+outputs:
+  run_root: runs/patchcore
+thresholds:
+  image_quantile: 0.995
+  pixel_quantile: 0.999
+postprocess:
+  min_area: 4
+  morph_kernel: 1
+consistency:
+  max_abs_error: 0.0001
+  mean_abs_error: 0.00001
