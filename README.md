@@ -1,10 +1,11 @@
 # AOI Anomaly Inspector
 
-A CPU-first, end-to-end anomaly-detection portfolio project for MVTec AD-style
-industrial images. It demonstrates data validation, good-only fitting,
-threshold calibration, pixel and image evaluation, offline prediction, ONNX
-export, and numerical deployment verification. It is an educational reference,
-not a production detector or a benchmark claim.
+An end-to-end anomaly-detection portfolio project for MVTec AD-style industrial
+images. It demonstrates data validation, good-only fitting, threshold
+calibration, pixel and image evaluation, offline prediction, ONNX export, and
+numerical deployment verification. Development and verification were performed
+on CPU-only hardware. It is an educational reference, not a production detector
+or a benchmark claim.
 
 ```mermaid
 flowchart LR
@@ -205,11 +206,11 @@ heatmap, prediction overlay, ground-truth mask, predicted mask, and an error map
 uv run pytest -v
 ```
 
-The documented path is CPU-first. The detectors are intentionally lightweight
-approximations, and their scores depend on the selected backbone layer, random
-seed, training-normal coverage, image resizing, and calibrated operating point.
-They do not replace production validation, inspection-system integration, or
-full canonical PaDiM/PatchCore implementations.
+The documented workflow was executed on CPU-only hardware. The detectors are
+intentionally lightweight approximations, and their scores depend on the selected
+backbone layer, random seed, training-normal coverage, image resizing, and
+calibrated operating point. They do not replace production validation,
+inspection-system integration, or full canonical PaDiM/PatchCore implementations.
 
 ## License
 
