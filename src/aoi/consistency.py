@@ -38,6 +38,37 @@ def enforce_tolerances(
         )
 
 
+def compare_decisions(
+    native_scores: np.ndarray,
+    exported_scores: np.ndarray,
+    threshold: float,
+    ambiguity_tolerance: float,
+) -> dict[str, float | int | None]:
+    native_decision = native_scores > threshold
+    exported_decision = exported_scores > threshold
+    agreement = native_decision == exported_decision
+    ambiguous = (np.abs(native_scores - threshold) <= ambiguity_tolerance) | (
+        np.abs(exported_scores - threshold) <= ambiguity_tolerance
+    )
+    stable = ~ambiguous
+    return {
+        "decision_agreement": float(np.mean(agreement)),
+        "stable_decision_agreement": float(np.mean(agreement[stable])) if np.any(stable) else None,
+        "ambiguous_decisions": int(np.sum(ambiguous)),
+        "stable_decisions": int(np.sum(stable)),
+        "decision_ambiguity_tolerance": ambiguity_tolerance,
+    }
+
+
+def enforce_decision_agreement(agreement: float | None) -> None:
+    if agreement is None:
+        return
+    if not np.isfinite(agreement) or not 0.0 <= agreement <= 1.0:
+        raise RuntimeError(f"invalid decision agreement: {agreement}")
+    if agreement != 1.0:
+        raise RuntimeError(f"native/ONNX decisions disagree: agreement={agreement}")
+
+
 def check_run_consistency(
     run_dir: Path,
     input_dir: Path,
@@ -79,9 +110,14 @@ def check_run_consistency(
     }
     if paths.thresholds.exists():
         thresholds = json.loads(paths.thresholds.read_text(encoding="utf-8"))
-        native_decision = native_score.cpu().numpy() > float(thresholds["image_threshold"])
-        exported_decision = exported_score > float(thresholds["image_threshold"])
-        result["decision_agreement"] = float(np.mean(native_decision == exported_decision))
+        result.update(
+            compare_decisions(
+                native_score.cpu().numpy(),
+                exported_score,
+                float(thresholds["image_threshold"]),
+                config.consistency_max_abs_error,
+            )
+        )
     write_json_atomic(paths.consistency, result)
     enforce_tolerances(
         map_metrics,
@@ -93,6 +129,8 @@ def check_run_consistency(
         max_abs_tolerance=config.consistency_max_abs_error,
         mean_abs_tolerance=config.consistency_mean_abs_error,
     )
+    if "stable_decision_agreement" in result:
+        enforce_decision_agreement(result["stable_decision_agreement"])
     result["passed"] = True
     write_json_atomic(paths.consistency, result)
     update_manifest(paths.manifest, {"consistency": {"status": "complete", "created_at": now_utc()}})

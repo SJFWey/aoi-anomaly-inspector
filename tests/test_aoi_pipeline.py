@@ -4,13 +4,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import cv2
 import numpy as np
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from aoi.data import load_mvtec_split
+from aoi.data import ImageSample, load_mvtec_split, read_mask, split_normal_samples
 from aoi.postprocess import postprocess_map
 from aoi.reporting import summarize_records, write_json, write_jsonl
 from aoi.thresholds import fit_thresholds
@@ -27,6 +28,29 @@ class AoiPipelineTests(unittest.TestCase):
         self.assertEqual(len(test), 2)
         self.assertTrue(all(sample.label == "good" for sample in train))
         self.assertEqual({sample.label for sample in test}, {"good", "scratch"})
+
+    def test_normal_calibration_split_is_deterministic_and_disjoint(self) -> None:
+        samples = [ImageSample(Path(f"{index}.png"), "good", 0, None) for index in range(10)]
+
+        first = split_normal_samples(samples, calibration_fraction=0.2, seed=42)
+        second = split_normal_samples(samples, calibration_fraction=0.2, seed=42)
+
+        self.assertEqual(first, second)
+        self.assertEqual(len(first.fit), 8)
+        self.assertEqual(len(first.calibration), 2)
+        self.assertFalse(first.shares_samples)
+        self.assertTrue(set(first.fit).isdisjoint(first.calibration))
+
+    def test_read_mask_rejects_size_mismatch_and_empty_mask(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            mask_path = Path(tmp) / "mask.png"
+            cv2.imwrite(str(mask_path), np.full((2, 3), 255, dtype=np.uint8))
+            with self.assertRaisesRegex(ValueError, "size mismatch"):
+                read_mask(mask_path, (3, 3))
+
+            cv2.imwrite(str(mask_path), np.zeros((3, 3), dtype=np.uint8))
+            with self.assertRaisesRegex(ValueError, "empty"):
+                read_mask(mask_path, (3, 3))
 
     def test_threshold_quantiles_are_deterministic(self) -> None:
         thresholds = fit_thresholds(

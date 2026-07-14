@@ -11,6 +11,11 @@ from aoi.postprocess import normalize_map
 PANEL_SIZE = 320
 
 
+def _write_image(path: Path, image: np.ndarray) -> None:
+    if not cv2.imwrite(str(path), image):
+        raise OSError(f"Failed to write image: {path}")
+
+
 def overlay_anomaly_map(image_bgr: np.ndarray, anomaly_map: np.ndarray, alpha: float = 0.45) -> np.ndarray:
     heat = normalize_map(
         cv2.resize(
@@ -34,7 +39,7 @@ def draw_defects(image_bgr: np.ndarray, defects: list[dict]) -> np.ndarray:
 def save_overlay(path: Path, image_bgr: np.ndarray, anomaly_map: np.ndarray, defects: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     overlay = draw_defects(overlay_anomaly_map(image_bgr, anomaly_map), defects)
-    cv2.imwrite(str(path), overlay)
+    _write_image(path, overlay)
 
 
 def _resize_panel(image: np.ndarray) -> np.ndarray:
@@ -143,7 +148,7 @@ def save_diagnostic_composite(
         1,
         cv2.LINE_AA,
     )
-    cv2.imwrite(str(path), np.concatenate([header, body], axis=0))
+    _write_image(path, np.concatenate([header, body], axis=0))
 
 
 def save_composite(
@@ -168,4 +173,4 @@ def save_composite(
         2,
         cv2.LINE_AA,
     )
-    cv2.imwrite(str(path), np.concatenate([header, composite], axis=0))
+    _write_image(path, np.concatenate([header, composite], axis=0))

@@ -1,18 +1,19 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 
 from aoi.artifacts import RunPaths, environment_snapshot, git_commit, sha256_file, update_manifest, write_json_atomic, write_yaml_atomic
 from aoi.config import load_experiment_config
-from aoi.data import load_mvtec_split
+from aoi.data import load_mvtec_split, split_normal_samples
 from aoi.modeling import fit_model, load_model, model_metadata, save_model
 from aoi.reporting import now_utc
 
 
 def _run_id() -> str:
-    return now_utc().replace("-", "").replace(":", "").replace("+", "Z")
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
 def train_run(
@@ -37,10 +38,11 @@ def train_run(
     if not train_good:
         raise RuntimeError(f"No train/good images found under {config.data_root / config.category}")
 
+    normal_split = split_normal_samples(train_good, config.calibration_fraction, config.seed)
     write_yaml_atomic(paths.config, config.to_dict())
     model = fit_model(
         model_name=config.model_name,
-        image_paths=[sample.image_path for sample in train_good],
+        image_paths=[sample.image_path for sample in normal_split.fit],
         backbone=config.backbone,
         layers=config.layers,
         image_size=config.image_size,
@@ -54,7 +56,7 @@ def train_run(
     )
     save_model(paths.model, model)
     reloaded = load_model(paths.model, device=config.device)
-    validation = reloaded.predict_path(train_good[0].image_path)
+    validation = reloaded.predict_path(normal_split.fit[0].image_path)
     if not np.isfinite(validation.image_score) or not np.isfinite(validation.anomaly_map).all():
         raise ValueError("Reloaded model produced non-finite validation output")
     model_hash = sha256_file(paths.model)
@@ -66,6 +68,11 @@ def train_run(
             "category": config.category,
             "source_git_commit": git_commit(Path(__file__).resolve().parents[2]),
             "model_sha256": model_hash,
+            "normal_split": {
+                "fit_images": len(normal_split.fit),
+                "calibration_images": len(normal_split.calibration),
+                "shares_samples": normal_split.shares_samples,
+            },
             "model_state": model_metadata(model),
             "environment": environment_snapshot(),
         },

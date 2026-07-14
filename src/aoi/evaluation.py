@@ -9,7 +9,7 @@ from sklearn.metrics import roc_auc_score
 
 from aoi.artifacts import RunPaths, sha256_file, update_manifest, write_json_atomic, write_jsonl_atomic
 from aoi.config import load_experiment_config
-from aoi.data import ImageSample, load_mvtec_split, mask_to_array, read_bgr, read_mask
+from aoi.data import ImageSample, load_mvtec_split, read_bgr, read_mask, split_normal_samples
 from aoi.modeling import AnomalyModel, load_model
 from aoi.postprocess import postprocess_map
 from aoi.reporting import now_utc, summarize_records
@@ -127,7 +127,8 @@ def evaluate_run(run_dir: Path, *, device: str = "cpu") -> RunPaths:
     ]
     if not train_good:
         raise RuntimeError("No train/good images found for threshold calibration")
-    train_predictions = [model.predict_path(sample.image_path) for sample in train_good]
+    normal_split = split_normal_samples(train_good, config.calibration_fraction, config.seed)
+    train_predictions = [model.predict_path(sample.image_path) for sample in normal_split.calibration]
     thresholds = fit_thresholds(
         [prediction.image_score for prediction in train_predictions],
         [prediction.anomaly_map for prediction in train_predictions],
@@ -139,6 +140,11 @@ def evaluate_run(run_dir: Path, *, device: str = "cpu") -> RunPaths:
         "pixel_threshold": thresholds.pixel_threshold,
         "image_quantile": thresholds.quantile_image,
         "pixel_quantile": thresholds.quantile_pixel,
+        "calibration_fraction": config.calibration_fraction,
+        "calibration_images": len(normal_split.calibration),
+        "calibration_source": (
+            "shared_train_good_fallback" if normal_split.shares_samples else "held_out_train_good"
+        ),
         "created_at": now_utc(),
     }
     write_json_atomic(paths.thresholds, thresholds_data)
@@ -159,7 +165,7 @@ def evaluate_run(run_dir: Path, *, device: str = "cpu") -> RunPaths:
     image_targets = [record["label_index"] for record in records]
     image_scores = [record["image_score"] for record in records]
     image_predictions = [int(record["decision"] == "NG") for record in records]
-    pixel_targets = np.concatenate([mask_to_array(mask, mask.shape).reshape(-1) for mask in ground_truth])
+    pixel_targets = np.concatenate([(mask > 0).astype(np.uint8).reshape(-1) for mask in ground_truth])
     pixel_predictions = np.concatenate([(mask > 0).astype(np.uint8).reshape(-1) for mask in masks])
     pixel_scores = np.concatenate(
         [

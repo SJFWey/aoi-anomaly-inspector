@@ -5,7 +5,13 @@ import numpy as np
 import pytest
 import yaml
 
-from aoi.consistency import check_run_consistency, compare_outputs, enforce_tolerances
+from aoi.consistency import (
+    check_run_consistency,
+    compare_decisions,
+    compare_outputs,
+    enforce_decision_agreement,
+    enforce_tolerances,
+)
 from aoi.evaluation import evaluate_run
 from aoi.exporting import export_run
 from aoi.training import train_run
@@ -46,6 +52,26 @@ def test_enforce_tolerances_rejects_non_finite_metrics() -> None:
             max_abs_tolerance=0.001,
             mean_abs_tolerance=0.001,
         )
+
+
+def test_enforce_decision_agreement_requires_exact_match() -> None:
+    enforce_decision_agreement(None)
+    enforce_decision_agreement(1.0)
+    with pytest.raises(RuntimeError, match="decisions disagree"):
+        enforce_decision_agreement(0.5)
+
+
+def test_compare_decisions_separates_threshold_ambiguity() -> None:
+    metrics = compare_decisions(
+        np.array([0.4, 0.50001]),
+        np.array([0.4, 0.49999]),
+        threshold=0.5,
+        ambiguity_tolerance=0.0001,
+    )
+
+    assert metrics["decision_agreement"] == 0.5
+    assert metrics["stable_decision_agreement"] == 1.0
+    assert metrics["ambiguous_decisions"] == 1
 
 
 @pytest.mark.parametrize("model_name", ["padim", "patchcore"])
