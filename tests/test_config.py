@@ -53,3 +53,13 @@ def test_config_rejects_unknown_model(tmp_path: Path) -> None:
     path.write_text("model: {name: gan}\n", encoding="utf-8")
     with pytest.raises(ValueError, match="Unsupported model"):
         load_experiment_config(path)
+
+
+def test_config_rejects_invalid_calibration_fraction(tmp_path: Path) -> None:
+    path = tmp_path / "bad-calibration.yaml"
+    path.write_text(
+        "model: {name: patchcore}\nthresholds: {calibration_fraction: 1.0}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="calibration_fraction"):
+        load_experiment_config(path)

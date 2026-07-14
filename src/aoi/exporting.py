@@ -28,9 +28,9 @@ def export_run(run_dir: Path, *, opset: int = 18) -> RunPaths:
         temporary,
         input_names=["image"],
         output_names=["anomaly_map", "pred_score"],
-        dynamic_axes={"image": {0: "batch"}, "anomaly_map": {0: "batch"}, "pred_score": {0: "batch"}},
+        dynamic_shapes=({0: torch.export.Dim("batch")},),
         opset_version=opset,
-        dynamo=False,
+        dynamo=True,
     )
     exported = onnx.load(temporary)
     onnx.checker.check_model(exported)

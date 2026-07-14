@@ -19,6 +19,36 @@ class ImageSample:
     mask_path: Path | None
 
 
+@dataclass(frozen=True)
+class NormalSplit:
+    fit: list[ImageSample]
+    calibration: list[ImageSample]
+    shares_samples: bool
+
+
+def split_normal_samples(
+    samples: list[ImageSample], calibration_fraction: float, seed: int
+) -> NormalSplit:
+    """Deterministically reserve normal images for threshold calibration."""
+    ordered = sorted(samples, key=lambda sample: str(sample.image_path))
+    if not ordered:
+        raise ValueError("At least one normal sample is required")
+    if calibration_fraction <= 0.0 or len(ordered) < 2:
+        return NormalSplit(fit=ordered, calibration=ordered, shares_samples=True)
+
+    calibration_count = min(
+        len(ordered) - 1,
+        max(1, int(round(len(ordered) * calibration_fraction))),
+    )
+    generator = np.random.default_rng(seed)
+    calibration_indices = set(
+        int(index) for index in generator.permutation(len(ordered))[:calibration_count]
+    )
+    fit = [sample for index, sample in enumerate(ordered) if index not in calibration_indices]
+    calibration = [sample for index, sample in enumerate(ordered) if index in calibration_indices]
+    return NormalSplit(fit=fit, calibration=calibration, shares_samples=False)
+
+
 def collect_image_paths(directory: Path) -> list[Path]:
     if not directory.exists():
         return []
@@ -73,6 +103,12 @@ def read_mask(path: Path | None, shape_hw: tuple[int, int]) -> np.ndarray:
     mask = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
     if mask is None:
         raise ValueError(f"Failed to read mask: {path}")
+    if mask.shape[:2] != shape_hw:
+        raise ValueError(
+            f"Ground-truth mask size mismatch: image={shape_hw}, mask={mask.shape[:2]}, path={path}"
+        )
+    if cv2.countNonZero(mask) == 0:
+        raise ValueError(f"Ground-truth mask is empty: {path}")
     return mask
 
 

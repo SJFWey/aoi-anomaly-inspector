@@ -23,6 +23,7 @@ class ExperimentConfig:
     device: str
     batch_size: int
     run_root: Path
+    calibration_fraction: float
     quantile_image: float
     quantile_pixel: float
     min_area: int
@@ -50,6 +51,7 @@ class ExperimentConfig:
             "trainer": {"device": self.device, "batch_size": self.batch_size},
             "outputs": {"run_root": str(self.run_root)},
             "thresholds": {
+                "calibration_fraction": self.calibration_fraction,
                 "image_quantile": self.quantile_image,
                 "pixel_quantile": self.quantile_pixel,
             },
@@ -122,6 +124,9 @@ def load_experiment_config(
     coreset_sampling_ratio = float(model.get("coreset_sampling_ratio", 0.1))
     if not 0.0 < coreset_sampling_ratio <= 1.0:
         raise ValueError("coreset_sampling_ratio must be in (0, 1]")
+    calibration_fraction = float(thresholds.get("calibration_fraction", 0.0))
+    if not 0.0 <= calibration_fraction < 1.0:
+        raise ValueError("calibration_fraction must be in [0, 1)")
     quantile_image = _quantile("image_quantile", float(thresholds.get("image_quantile", 0.995)))
     quantile_pixel = _quantile("pixel_quantile", float(thresholds.get("pixel_quantile", 0.999)))
     max_abs_error = float(
@@ -146,6 +151,7 @@ def load_experiment_config(
         device=str(device if device is not None else trainer.get("device", "cpu")),
         batch_size=batch_size,
         run_root=Path(outputs.get("run_root", f"runs/{model_name}")),
+        calibration_fraction=calibration_fraction,
         quantile_image=quantile_image,
         quantile_pixel=quantile_pixel,
         min_area=int(postprocess.get("min_area", 50)),

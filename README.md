@@ -3,16 +3,15 @@
 An end-to-end anomaly-detection portfolio project for MVTec AD-style industrial
 images. It demonstrates data validation, good-only fitting, threshold
 calibration, pixel and image evaluation, offline prediction, ONNX export, and
-numerical deployment verification. Development and verification were performed
-on CPU-only hardware. It is an educational reference, not a production detector
-or a benchmark claim.
+PyTorch-to-ONNX Runtime numerical parity checks on CPU. It is an educational
+reference, not a production detector or a benchmark claim.
 
 ```mermaid
 flowchart LR
     D[MVTec-style images] --> C[check_data.py]
-    D --> T[train.py: train/good only]
+    D --> T[train.py: fit train/good subset]
     T --> R[run directory: model + resolved config]
-    R --> E[evaluate.py: train-good calibration + test metrics]
+    D --> E[evaluate.py: held-out train/good calibration + test metrics]
     E --> P[predict.py: masks, overlays, reports]
     R --> X[export.py: ONNX graph]
     X --> V[consistency_check.py: PyTorch vs ONNX Runtime]
@@ -102,9 +101,16 @@ uv run python scripts/run_pipeline.py \
 
 ## Evaluation policy and metrics
 
-Fitting reads only `train/good`. Evaluation calibrates the image and pixel
-thresholds from those same normal training scores, then applies the fixed
-thresholds to the test split. Test images never tune a threshold.
+Fitting and calibration read only `train/good`. The MVTec configurations use a
+deterministic seed-based split: 80% fits the detector and 20% calibrates the
+image and pixel thresholds. The resolved config, metadata, and
+`thresholds.json` record the split policy and sample counts. Test images never
+tune a threshold.
+
+The two-image offline fixture intentionally uses shared normal samples
+(`calibration_fraction: 0.0`) because it is a functional smoke test, not a
+statistical evaluation. Runs with fewer than two normal images use the same
+fallback and label it explicitly in `thresholds.json`.
 
 - Image AUROC ranks image anomaly scores when both image classes exist.
 - Pixel AUROC ranks anomaly-map pixels when both mask classes exist.
@@ -152,12 +158,45 @@ The ONNX model has one dynamic-batch input and two outputs:
 Decisions, thresholding, connected components, image decoding, and overlays
 remain outside the graph.
 
+The consistency check compares CPU PyTorch and ONNX Runtime outputs. It records
+raw decision agreement, the number of scores within the configured absolute
+tolerance of the threshold, and agreement on the remaining stable decisions.
+The run fails on a stable decision mismatch; a near-threshold flip is reported
+as an ambiguity instead of being silently folded into a passing claim.
+
+## Reproducing verified MVTec AD results
+
+The tracked assets are generated rather than hand-assembled. With a local MVTec
+AD copy at `<data-root>`, run the pipeline once per category:
+
+```bash
+for category in bottle hazelnut cable; do
+  uv run python scripts/run_pipeline.py \
+    --config configs/patchcore_mvtec.yaml \
+    --data-root <data-root> \
+    --category "$category" \
+    --consistency-input <data-root>/$category/test \
+    --run-root /tmp/aoi-verified \
+    --run-id verified \
+    --device cpu
+done
+
+uv run python scripts/publish_results.py \
+  --run-dir /tmp/aoi-verified/bottle/verified \
+  --run-dir /tmp/aoi-verified/hazelnut/verified \
+  --run-dir /tmp/aoi-verified/cable/verified
+```
+
+`publish_results.py` verifies model and ONNX hashes, requires a shared source
+commit across runs, and regenerates `verified_results.json` plus the nine
+diagnostic composites with fixed margin-based selection rules.
+
+
 ## Measured tiny-fixture consistency
 
-The executed PatchCore-style run above compared two test images on CPU. It
-passed the configured maximum/mean tolerances of `1e-4` / `1e-5`, with map
-errors `1.12e-5` max and `3.77e-7` mean, score errors `7.75e-7` max and
-`5.07e-7` mean, and decision agreement `1.0`.
+The smoke fixture exercises the full export path and writes its exact map,
+score, and decision-consistency values to `export/consistency.json`. It is not
+used to claim detection quality.
 
 ## Verified MVTec AD results
 
